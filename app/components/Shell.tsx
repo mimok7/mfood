@@ -6,9 +6,15 @@ import { usePathname } from 'next/navigation'
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || ''
   const isAuthPage = pathname.startsWith('/auth')
+  const isAreaLayout = pathname.startsWith('/admin') || pathname.startsWith('/manager')
 
   if (isAuthPage) {
     return <>{children}</>
+  }
+
+  if (isAreaLayout) {
+    // 해당 경로는 각자 전용 레이아웃에서 네비를 렌더링하므로 글로벌 Shell의 네비는 숨깁니다.
+    return <div className="min-h-screen bg-gray-50">{children}</div>
   }
 
   return (

@@ -14,6 +14,13 @@ export function createSupabaseServer() {
           const all = store.getAll()
           return all.map((c: { name: string; value: string }) => ({ name: c.name, value: c.value }))
         },
+        async setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          const store = await cookies()
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Next.js cookies().set accepts { name, value, ...options }
+            store.set({ name, value, ...options })
+          })
+        },
       },
     }
   )

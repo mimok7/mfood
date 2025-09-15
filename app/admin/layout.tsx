@@ -45,8 +45,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </div>
                   <div className="pt-4">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-3">사용자 관리</h3>
-                    <a href="/admin/users" className="group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900">👥 사용자 목록</a>
-                    <a href="/admin/users/roles" className="group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900">🔐 권한 관리</a>
+                    <a href="/admin/restaurants" className="group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900">👥 사용자 관리(식당별)</a>
+                    <a href="/admin/restaurants" className="group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 hover:text-gray-900">🔐 권한 관리</a>
                   </div>
                   <div className="pt-4">
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 px-3">시스템</h3>
