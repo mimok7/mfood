@@ -1,18 +1,23 @@
-export const metadata = {
-  title: '인증 - Restaurant POS',
-  description: '로그인/회원가입 레이아웃',
-}
+import { getSession } from '../../lib/auth'
+import { redirect } from 'next/navigation'
+import type { Route } from 'next'
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+  const { user, role } = await getSession()
+
+  if (user) {
+    if (role === 'admin') {
+      redirect('/admin' as Route)
+    } else if (role === 'manager') {
+      redirect('/manager' as Route)
+    } else {
+      redirect('/' as Route)
+    }
+  }
+
   return (
-    <html lang="ko">
-      <body className="min-h-screen bg-gray-50">
-        <main className="min-h-screen flex items-center justify-center p-6">
-          <div className="w-full max-w-md mx-auto">
-            {children}
-          </div>
-        </main>
-      </body>
-    </html>
+    <main className="flex items-center justify-center min-h-screen p-6 bg-gray-100">
+      <div className="w-full max-w-md mx-auto">{children}</div>
+    </main>
   )
 }

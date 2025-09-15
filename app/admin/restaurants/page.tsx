@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireRole } from '@/lib/auth'
 
 export default async function AdminRestaurantsPage() {
+  await requireRole('admin')
   const sb = supabaseAdmin()
   const { data: restaurants } = await sb.from('restaurants').select('id, name, slug').order('created_at')
   return (

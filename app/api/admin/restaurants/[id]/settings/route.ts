@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireRole } from '@/lib/auth'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  await requireRole('admin')
   const resolvedParams = await params
   const form = await req.formData()
-  const fields = ['name','slug','phone','email','address'] as const
+  const fields = ['name', 'slug', 'phone', 'email', 'address'] as const
   const updates: Record<string, any> = {}
   for (const f of fields) {
     const v = form.get(f)

@@ -1,4 +1,30 @@
--- RLS Policies
+-- RLS Policies for Multi-Restaurant Environment
+
+-- Helper function to check if a user is an admin
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+as $$
+  select public.current_user_role() = 'admin';
+$$;
+
+-- Helper function to check if a user is at least a manager for a given restaurant
+create or replace function public.is_manager_or_admin(p_restaurant_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select
+    (public.current_user_role() = 'admin') or
+    (
+      public.current_user_role() = 'manager' and
+      public.current_user_restaurant_id() = p_restaurant_id
+    );
+$$;
+
+
+-- Enable RLS for all relevant tables
 alter table public.user_profile enable row level security;
 alter table public.restaurants enable row level security;
 alter table public.menu_categories enable row level security;
@@ -7,115 +33,107 @@ alter table public.tables enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 
--- Basic policies for user_profile
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'user_profile' and policyname = 'users can view own profile'
-  ) then
-    create policy "users can view own profile"
-      on public.user_profile
-      for select
-      using (auth.uid() = id);
-  end if;
-end $$;
+-- Clear existing generic policies before creating specific ones
+drop policy if exists "users can view own profile" on public.user_profile;
+drop policy if exists "users can update own profile" on public.user_profile;
+drop policy if exists "auth users can read restaurants" on public.restaurants;
+drop policy if exists "read menu categories by restaurant" on public.menu_categories;
+drop policy if exists "read menu items by restaurant" on public.menu_items;
+drop policy if exists "read tables" on public.tables;
+drop policy if exists "read orders" on public.orders;
+drop policy if exists "read order items" on public.order_items;
 
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'user_profile' and policyname = 'users can update own profile'
-  ) then
-    create policy "users can update own profile"
-      on public.user_profile
-      for update
-      using (auth.uid() = id);
-  end if;
-end $$;
 
--- Admin convenience: allow service role full access
--- (Service role bypasses RLS by design; no policy needed.)
+-- == Policies for `user_profile` ==
+-- Users can view their own profile.
+create policy "profile_read_own" on public.user_profile for select
+  using (auth.uid() = id);
+-- Admins can view any profile.
+create policy "profile_read_admin" on public.user_profile for select
+  using (public.is_admin());
+-- Users can update their own profile.
+create policy "profile_update_own" on public.user_profile for update
+  using (auth.uid() = id);
+-- Admins can update any profile.
+create policy "profile_update_admin" on public.user_profile for update
+  using (public.is_admin());
 
--- Restaurants
--- Read-all for authenticated users (adjust later if needed)
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'restaurants' and policyname = 'auth users can read restaurants'
-  ) then
-    create policy "auth users can read restaurants"
-      on public.restaurants
-      for select
-      to authenticated
-      using (true);
-  end if;
-end $$;
 
--- Managers/Admins can insert/update restaurants via service role API only initially
--- Leave DML restricted unless via service role
+-- == Policies for `restaurants` ==
+-- Any authenticated user can see all restaurants (e.g., for a selection screen).
+create policy "restaurants_read" on public.restaurants for select
+  to authenticated using (true);
+-- Only admins can create, update, or delete restaurants.
+create policy "restaurants_manage_admin" on public.restaurants for all
+  using (public.is_admin()) with check (public.is_admin());
 
--- Menu readable within same restaurant (assumes current_restaurant set via header/cookie)
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'menu_categories' and policyname = 'read menu categories by restaurant'
-  ) then
-    create policy "read menu categories by restaurant"
-      on public.menu_categories
-      for select
-      to authenticated
-      using (true);
-  end if;
-end $$;
 
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'menu_items' and policyname = 'read menu items by restaurant'
-  ) then
-    create policy "read menu items by restaurant"
-      on public.menu_items
-      for select
-      to authenticated
-      using (true);
-  end if;
-end $$;
+-- == Policies for restaurant-specific tables (`menu_categories`, `menu_items`, `tables`, `orders`) ==
+-- Function to generate policies for a given table
+create or replace procedure public.create_restaurant_rls_policies(p_table_name text)
+language plpgsql
+as $$
+begin
+  -- Policy for reading data:
+  -- Authenticated users can read data if it belongs to their assigned restaurant.
+  -- Admins can read data from any restaurant.
+  execute format('
+    create policy "%1$s_read" on public.%1$s for select
+    to authenticated using (
+      public.is_admin() or
+      restaurant_id = public.current_user_restaurant_id()
+    );
+  ', p_table_name);
 
--- Tables and orders basic read
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'tables' and policyname = 'read tables'
-  ) then
-    create policy "read tables"
-      on public.tables
-      for select
-      to authenticated
-      using (true);
-  end if;
-end $$;
+  -- Policy for managing data (insert, update, delete):
+  -- Managers can manage data for their own restaurant.
+  -- Admins can manage data for any restaurant.
+  execute format('
+    create policy "%1$s_manage" on public.%1$s for all
+    to authenticated using (
+      public.is_manager_or_admin(restaurant_id)
+    ) with check (
+      public.is_manager_or_admin(restaurant_id)
+    );
+  ', p_table_name);
+end;
+$$;
 
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'orders' and policyname = 'read orders'
-  ) then
-    create policy "read orders"
-      on public.orders
-      for select
-      to authenticated
-      using (true);
-  end if;
-end $$;
+-- Apply the policies to each table
+call public.create_restaurant_rls_policies('menu_categories');
+call public.create_restaurant_rls_policies('menu_items');
+call public.create_restaurant_rls_policies('tables');
+call public.create_restaurant_rls_policies('orders');
 
-do $$ begin
-  if not exists (
-    select 1 from pg_policies
-    where schemaname = 'public' and tablename = 'order_items' and policyname = 'read order items'
-  ) then
-    create policy "read order items"
-      on public.order_items
-      for select
-      to authenticated
-      using (exists (select 1 from public.orders o where o.id = order_id));
-  end if;
-end $$;
+
+-- == Policies for `order_items` ==
+-- `order_items` does not have a direct `restaurant_id`, so we check through the `orders` table.
+
+-- Read policy for order_items
+create policy "order_items_read" on public.order_items for select
+  to authenticated using (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_items.order_id
+      and (
+        public.is_admin() or
+        o.restaurant_id = public.current_user_restaurant_id()
+      )
+    )
+  );
+
+-- Manage policy for order_items
+create policy "order_items_manage" on public.order_items for all
+  to authenticated using (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_items.order_id
+      and public.is_manager_or_admin(o.restaurant_id)
+    )
+  ) with check (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_items.order_id
+      and public.is_manager_or_admin(o.restaurant_id)
+    )
+  );

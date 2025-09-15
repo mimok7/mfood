@@ -1,8 +1,14 @@
 import Link from 'next/link'
+import { requireRole } from '@/lib/auth'
 
 export default async function RestaurantAdminLayout({ children, params }: { children: React.ReactNode; params?: Promise<{ id: string }> }) {
   const resolvedParams = params ? (await params) as { id: string } : undefined
   const rid = resolvedParams?.id
+
+  // This layout is for a specific restaurant, so we require at least 'manager' role
+  // for this specific restaurant ID. Admins will also pass this check.
+  await requireRole('manager', { targetRestaurantId: rid, redirectTo: '/admin' as any })
+
   const tabs = [
     { href: `/admin/restaurants/${rid}`, label: '개요' },
     { href: `/admin/restaurants/${rid}/users`, label: '사용자' },

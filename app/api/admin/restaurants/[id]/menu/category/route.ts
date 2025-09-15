@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { requireRole } from '@/lib/auth'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params
+  await requireRole('manager', { targetRestaurantId: resolvedParams.id })
   const form = await req.formData()
   const name = String(form.get('name') || '')
   const position = Number(form.get('position') || 0)

@@ -5,9 +5,8 @@ export const metadata = {
 
 export default function ManagerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
-      <body className="min-h-screen bg-gray-50">
-        <div className="min-h-screen flex">
+    <>
+      <div className="min-h-screen flex bg-gray-50">
           {/* 좌측 네비게이션 */}
           <aside className="w-56 bg-white border-r border-gray-200 p-4">
             <div className="mb-4">
@@ -27,8 +26,7 @@ export default function ManagerLayout({ children }: { children: React.ReactNode 
           <main className="flex-1 p-6">
             {children}
           </main>
-        </div>
-      </body>
-    </html>
+      </div>
+    </>
   )
 }

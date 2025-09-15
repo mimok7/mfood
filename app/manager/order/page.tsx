@@ -3,9 +3,16 @@ import { requireRole } from '@/lib/auth'
 import { createSupabaseServer } from '@/lib/supabase-server'
 
 export default async function ManagerOrderPage() {
-  await requireRole('manager')
+  const { restaurant_id } = await requireRole('manager')
+  if (!restaurant_id) {
+    return <p>소속된 레스토랑이 없습니다.</p>
+  }
   const supabase = createSupabaseServer()
-  const { data: tables } = await supabase.from('tables').select('id,name').limit(50)
+  const { data: tables } = await supabase
+    .from('tables')
+    .select('id,name')
+    .eq('restaurant_id', restaurant_id)
+    .limit(50)
 
   return (
     <section>
