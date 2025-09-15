@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { createSupabaseServer } from '@/lib/supabase-server'
 
 export default async function MenuPage() {

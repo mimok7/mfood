@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { requireRole } from '@/lib/auth'
 import { createSupabaseServer } from '@/lib/supabase-server'
 
