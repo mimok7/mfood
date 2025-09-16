@@ -1,5 +1,6 @@
 import React from 'react'
 import CreateUserForm from './create-user-form'
+import UserList from './user-list'
 
 interface Props {
   params?: Promise<{ id: string }>
@@ -19,6 +20,9 @@ export default async function UsersPage({ params }: Props) {
           식당 ID: <code className='bg-blue-700 px-2 py-1 rounded text-xs'>{id}</code>
         </div>
       </div>
+
+      {/* 등록된 사용자 목록 섹션 */}
+      <UserList restaurantId={id} />
 
       {/* 사용자 생성 섹션 */}
       <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>

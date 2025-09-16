@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { cookies } from 'next/headers'
+import LogoutButton from './LogoutButton'
 
 export const metadata = {
   title: '관리자 패널 - Restaurant POS',
@@ -13,8 +14,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <>
       <div className="min-h-screen bg-gray-50">
         {/* 관리자 헤더 */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <header className="bg-white shadow-sm border-b border-gray-200 print:hidden">
+            <div className="px-4">
               <div className="flex justify-between items-center h-16">
                 <div className="flex items-center">
                   <a href="/admin" className="flex items-center">
@@ -29,12 +30,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 </div>
                 <div className="flex items-center space-x-2">
                   <a href="/" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">🏠 메인</a>
+                  <LogoutButton />
                 </div>
               </div>
             </div>
           </header>
 
-          <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+          <div className="w-full py-8">
             {children}
           </div>
         </div>

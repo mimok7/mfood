@@ -22,41 +22,60 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
   return (
     <div className='space-y-6'>
       {/* 인쇄 전용 전체 QR 레이아웃 - QR 코드만 표시 */}
-      <div className='print:block hidden print:fixed print:inset-0 print:z-50 print:bg-white'>
-        {/* 테이블 QR 코드들 - 각 QR을 별도 페이지에 크게 표시 */}
-        {tables?.map((t, index) => {
-          const url = `${base}/guest/qr/${t.token}`
+      <div className='print:block hidden'>
+        {/* Print: chunk tables into pages of 9 (3 cols x 3 rows) */}
+        {(() => {
+          const list = tables ?? []
+          const perPage = 9 // 3 cols x 3 rows
+          const pages: any[] = []
+          for (let i = 0; i < list.length; i += perPage) pages.push(list.slice(i, i + perPage))
           return (
-            <div key={t.id} className={`print:absolute print:inset-0 print:flex print:flex-col print:items-center print:justify-center print:min-h-screen print:p-8 ${index === 0 ? '' : 'print:break-before-page'}`}>
-              <div className='text-center mb-8'>
-                <h1 className='text-3xl font-bold text-gray-900 mb-2'>{restaurant?.name}</h1>
-                <h2 className='text-xl text-gray-700'>{t.name}</h2>
-                <p className='text-gray-600'>🪑 {t.capacity || 4}명 수용</p>
-              </div>
-              <div className='flex justify-center mb-8'>
-                <Qr url={url} size={400} className='w-80 h-80 p-4' />
-              </div>
-              <div className='text-center text-sm text-gray-500'>
-                <p>📱 스캔 후 바로 주문하기</p>
-              </div>
-            </div>
-          )
-        })}
+            <>
+              {pages.map((page, pi) => (
+                <div
+                  key={pi}
+                  // ensure page-break after each page except last
+                  style={{ pageBreakAfter: pi === pages.length - 1 ? 'auto' : 'always' }}
+                  className='print:block w-full p-4'
+                >
+                  <div className='w-full text-center mb-4'>
+                    <h1 className='text-2xl font-semibold text-gray-900'>{restaurant?.name}</h1>
+                  </div>
+                  <div className='grid grid-cols-3 gap-2 items-start'>
+                    {page.map((t: any) => {
+                      const url = `${base}/guest/qr/${t.token}`
+                      return (
+                        <div key={t.id} className='flex flex-col items-center justify-center p-2 text-center'>
+                          <div className='font-semibold'>{restaurant?.name}</div>
+                          <div className='text-sm text-gray-700 mb-1'>{t.name} ({t.capacity || 'N/A'}명)</div>
+                          <Qr url={url} size={180} className='w-44 h-44 p-1' />
+                          <div className='text-xs text-gray-600 mt-1'>📱 스캔 후 바로 주문하기</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
 
-        {/* 웨이팅 QR 코드 - 별도 페이지 */}
-        <div className='print:absolute print:inset-0 print:flex print:flex-col print:items-center print:justify-center print:min-h-screen print:p-8 print:break-before-page'>
-          <div className='text-center mb-8'>
-            <h1 className='text-3xl font-bold text-gray-900 mb-2'>{restaurant?.name}</h1>
-            <h2 className='text-xl text-gray-700'>대기 등록</h2>
-            <p className='text-gray-600'>📝 웨이팅 등록</p>
-          </div>
-          <div className='flex justify-center mb-8'>
-            <Qr url={`${base}/guest/waitlist?restaurant=${rid}`} size={400} className='w-80 h-80 p-4' />
-          </div>
-          <div className='text-center text-sm text-gray-500'>
-            <p>📝 대기자 등록 후 순번 확인</p>
-          </div>
-        </div>
+              {/* append waiting QR as its own page (3 duplicates) */}
+              <div style={{ pageBreakAfter: 'auto' }} className='print:block w-full p-4'>
+                <div className='w-full text-center mb-4'>
+                  <h1 className='text-2xl font-semibold text-gray-900'>{restaurant?.name}</h1>
+                </div>
+                <div className='grid grid-cols-3 gap-4 items-start'>
+                  {Array.from({ length: 3 }).map((_, idx) => (
+                    <div key={idx} className='flex flex-col items-center justify-center p-2 text-center'>
+                      <div className='font-semibold mb-1'>{restaurant?.name}</div>
+                      <div className='text-lg text-gray-700 mb-1'>대기 등록</div>
+                      <Qr url={`${base}/guest/waitlist?restaurant=${rid}`} size={180} className='w-44 h-44 p-1' />
+                      <div className='text-xs text-gray-600 mt-1'>📝 대기자 등록 후 순번 확인</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )
+        })()}
       </div>
 
       {/* 일반 화면용 레이아웃 - 인쇄 시 완전히 숨김 */}

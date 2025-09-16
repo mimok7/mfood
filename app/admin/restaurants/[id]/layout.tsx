@@ -23,6 +23,7 @@ export default async function RestaurantAdminLayout({ children, params }: { chil
 
   const tabs = [
     { href: `/admin/restaurants/${rid}`, label: '개요', icon: '📊' },
+    { href: `/admin/restaurants/${rid}/menu`, label: '메뉴', icon: '🍽️' },
     { href: `/admin/restaurants/${rid}/settings`, label: '설정', icon: '⚙️' },
     { href: `/admin/restaurants/${rid}/tables`, label: '테이블', icon: '🪑' },
     { href: `/admin/restaurants/${rid}/users`, label: '사용자', icon: '👥' },
@@ -32,8 +33,8 @@ export default async function RestaurantAdminLayout({ children, params }: { chil
     { href: `/admin/restaurants/${rid}/usage`, label: '사용량', icon: '📊' },
   ]
   return (
-    <div className="w-full">
-      <div className="bg-white border rounded mb-4 p-4 flex items-center justify-between">
+    <div className="w-full print:p-0">
+      <div className="bg-white border rounded mb-4 px-4 py-3 flex items-center justify-between print:hidden">
         <div>
           <h1 className="text-xl font-semibold">{restaurant?.name ?? '식당'}</h1>
           <p className="text-sm text-gray-500">식당 관리 · ID: {rid}</p>
@@ -44,9 +45,9 @@ export default async function RestaurantAdminLayout({ children, params }: { chil
         </div>
       </div>
 
-      <div className="flex gap-6">
-        <aside className="w-40 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="flex gap-4">
+        <aside className="w-36 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden print:hidden">
+          <div className="px-3 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
             <h2 className="text-sm font-semibold text-gray-900 flex items-center">
               <span className="mr-2">🏪</span>
               메뉴
@@ -60,16 +61,16 @@ export default async function RestaurantAdminLayout({ children, params }: { chil
                   <Link
                     key={t.href}
                     href={t.href as any}
-                    className={`group flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${
+                    className={`group flex items-center px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
                       isActive
                         ? 'bg-blue-50 border border-blue-200 text-blue-700 shadow-sm'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }`}
                   >
-                    <span className="text-lg mr-3 group-hover:scale-110 transition-transform duration-200">
+                    <span className="text-base mr-2 group-hover:scale-110 transition-transform duration-200">
                       {t.icon}
                     </span>
-                    <div className={`text-sm font-semibold ${isActive ? 'text-blue-700' : 'text-gray-900'}`}>
+                    <div className={`font-semibold ${isActive ? 'text-blue-700' : 'text-gray-900'}`}>
                       {t.label}
                     </div>
                     {isActive && (
@@ -81,7 +82,7 @@ export default async function RestaurantAdminLayout({ children, params }: { chil
             </div>
           </nav>
         </aside>
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0 print:w-full print:m-0 print:p-0">{children}</main>
       </div>
     </div>
   )

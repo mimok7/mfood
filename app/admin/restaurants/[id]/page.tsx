@@ -14,9 +14,13 @@ export default async function RestaurantOverview({ params }: { params?: Promise<
     sb.from('kitchen_queue').select('id').eq('restaurant_id', rid),
   ])
 
-  const activeOrders = orders?.filter(o => o.status !== 'completed')?.length ?? 0
-  const pendingWaitlist = waitlist?.filter(w => w.status === 'waiting')?.length ?? 0
-  const pendingKitchen = kitchen?.filter(k => k.status === 'pending')?.length ?? 0
+  const ordersList = (orders ?? []) as { id: string; status?: string }[]
+  const waitlistList = (waitlist ?? []) as import('@/lib/types').WaitlistRow[]
+  const kitchenList = (kitchen ?? []) as { id: string; status?: string }[]
+
+  const activeOrders = ordersList.filter(o => o.status !== 'completed')?.length ?? 0
+  const pendingWaitlist = waitlistList.filter(w => w.status === 'waiting')?.length ?? 0
+  const pendingKitchen = kitchenList.filter(k => k.status === 'pending')?.length ?? 0
 
   return (
     <div className="w-full -mx-6 sm:-mx-8 lg:-mx-12 px-6 sm:px-8 lg:px-12 space-y-8">

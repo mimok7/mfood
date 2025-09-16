@@ -1,4 +1,34 @@
 export type Role = 'guest' | 'manager' | 'admin'
 
-// Narrow Database typing optionally later; minimal to start
-export type Database = any
+// Minimal Waitlist row type used across the app
+export type WaitlistRow = {
+	id: string
+	restaurant_id: string
+	name: string
+	phone?: string | null
+	party_size: number
+	status: 'waiting' | 'seated' | 'cancelled' | 'called' | string
+	is_reservation?: boolean | null
+	reservation_time?: string | null
+	duration_minutes?: number | null
+	notes?: string | null
+	special_request?: string | null
+	created_at: string
+	updated_at?: string | null
+}
+
+// Minimal Supabase-like Database type. Expand as needed.
+export type Database = {
+	public: {
+		Tables: {
+			waitlist: {
+				Row: WaitlistRow
+				Insert: Omit<Partial<WaitlistRow>, 'id' | 'created_at'> & { restaurant_id: string }
+				Update: Partial<WaitlistRow>
+			}
+			// add other tables here as needed
+		}
+		Views: {}
+		Functions: {}
+	}
+}
