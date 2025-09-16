@@ -13,6 +13,18 @@ export default function RestaurantsEditor({ initialRestaurants }: { initialResta
     if (selected) fetchDetails(selected)
   }, [selected])
 
+  useEffect(() => {
+    // persist selected restaurant for admin layout via a server-set cookie
+    if (!selected) return
+    ;(async () => {
+      try {
+        await fetch('/api/admin/restaurants/select', { method: 'POST', body: JSON.stringify({ id: selected }), headers: { 'Content-Type': 'application/json' } })
+      } catch (e) {
+        // ignore
+      }
+    })()
+  }, [selected])
+
   async function fetchDetails(id: string) {
     setLoading(true)
     setError(null)
@@ -47,47 +59,191 @@ export default function RestaurantsEditor({ initialRestaurants }: { initialResta
   }
 
   return (
-    <div className="space-y-4">
-      <div className="bg-white p-4 rounded border">
-        <label className="block text-sm font-medium mb-1">레스토랑 선택</label>
-        <select className="border rounded px-3 py-2 w-full" value={selected ?? ''} onChange={(e) => setSelected(e.target.value)}>
-          {restaurants.map(r => <option key={r.id} value={r.id}>{r.name} {r.slug ? `(/${r.slug})` : ''}</option>)}
-        </select>
+    <div className="w-full space-y-8">
+      {/* 레스토랑 선택 섹션 */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">레스토랑 선택</h2>
+        <div className="max-w-md">
+          <label className="block text-sm font-medium text-gray-700 mb-2">관리할 레스토랑</label>
+          <select
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            value={selected ?? ''}
+            onChange={(e) => setSelected(e.target.value)}
+          >
+            {restaurants.map(r => <option key={r.id} value={r.id}>{r.name} {r.slug ? `(/${r.slug})` : ''}</option>)}
+          </select>
+        </div>
       </div>
 
-      {loading && <div>로딩...</div>}
-      {error && <div className="text-red-600">{error}</div>}
+      {/* 로딩 및 에러 상태 */}
+      {loading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+            <span className="text-blue-800">데이터를 불러오는 중...</span>
+          </div>
+        </div>
+      )}
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="text-red-600 mr-3">⚠️</div>
+            <span className="text-red-800">{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 레스토랑 상세 정보 폼 */}
       {data && (
-        <form onSubmit={handleSubmit} className="bg-white p-4 rounded border space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <input name="name" defaultValue={data.restaurant?.name ?? ''} placeholder="상호명" className="border rounded px-3 py-2" />
-            <input name="slug" defaultValue={data.restaurant?.slug ?? ''} placeholder="슬러그" className="border rounded px-3 py-2" />
-            <input name="phone" defaultValue={data.restaurant?.phone ?? ''} placeholder="전화" className="border rounded px-3 py-2" />
-            <input name="email" defaultValue={data.restaurant?.email ?? ''} placeholder="이메일" className="border rounded px-3 py-2" />
-            <input name="address" defaultValue={data.restaurant?.address ?? ''} placeholder="주소" className="border rounded px-3 py-2 md:col-span-2" />
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">레스토랑 정보 설정</h2>
+            <p className="text-sm text-gray-600 mt-1">기본 정보와 테이블을 관리하세요</p>
           </div>
 
-          <div>
-            <h3 className="font-medium mb-2">테이블</h3>
-            <div className="space-y-2">
-              {(data.tables ?? []).map((t: any, idx: number) => (
-                <div key={t.id} className="flex gap-2">
-                  <input type="hidden" name="table_id[]" value={t.id} />
-                  <input name="table_name[]" defaultValue={t.name} className="border rounded px-3 py-2 flex-1" />
-                  <input name="table_capacity[]" type="number" defaultValue={t.capacity} className="w-40 border rounded px-3 py-2" />
+          <div className="p-6 space-y-8">
+            {/* 기본 정보 섹션 */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">기본 정보</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">상호명</label>
+                  <input
+                    name="name"
+                    defaultValue={data.restaurant?.name ?? ''}
+                    placeholder="레스토랑 이름"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
                 </div>
-              ))}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">슬러그</label>
+                  <input
+                    name="slug"
+                    defaultValue={data.restaurant?.slug ?? ''}
+                    placeholder="restaurant-slug"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
+                  <input
+                    name="phone"
+                    defaultValue={data.restaurant?.phone ?? ''}
+                    placeholder="02-123-4567"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                  <input
+                    name="email"
+                    type="email"
+                    defaultValue={data.restaurant?.email ?? ''}
+                    placeholder="contact@restaurant.com"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">주소</label>
+                  <input
+                    name="address"
+                    defaultValue={data.restaurant?.address ?? ''}
+                    placeholder="서울시 강남구..."
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <input name="add_table_count" type="number" defaultValue={0} className="border rounded px-3 py-2" />
-            <input name="new_table_capacity" type="number" defaultValue={4} className="border rounded px-3 py-2" />
-          </div>
+            {/* 테이블 관리 섹션 */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">테이블 관리</h3>
+              <div className="space-y-4">
+                {/* 기존 테이블 목록 */}
+                {(data.tables ?? []).length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">기존 테이블</h4>
+                    <div className="space-y-3">
+                      {(data.tables ?? []).map((t: any, idx: number) => (
+                        <div key={t.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                          <input type="hidden" name="table_id[]" value={t.id} />
+                          <div className="flex-1">
+                            <input
+                              name="table_name[]"
+                              defaultValue={t.name}
+                              placeholder={`테이블 ${idx + 1}`}
+                              className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div className="w-32">
+                            <input
+                              name="table_capacity[]"
+                              type="number"
+                              defaultValue={t.capacity}
+                              min="1"
+                              max="20"
+                              className="w-full border border-gray-300 rounded px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600">명</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-          <div>
-            <button className="px-3 py-2 bg-blue-600 text-white rounded" disabled={loading}>저장</button>
+                {/* 새 테이블 추가 */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-900 mb-3">새 테이블 추가</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-blue-800 mb-2">추가할 테이블 수</label>
+                      <input
+                        name="add_table_count"
+                        type="number"
+                        defaultValue={0}
+                        min="0"
+                        max="20"
+                        className="w-full border border-blue-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-blue-800 mb-2">기본 수용인원</label>
+                      <input
+                        name="new_table_capacity"
+                        type="number"
+                        defaultValue={4}
+                        min="1"
+                        max="20"
+                        className="w-full border border-blue-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 저장 버튼 */}
+            <div className="flex justify-end pt-6 border-t border-gray-200">
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    저장 중...
+                  </>
+                ) : (
+                  <>
+                    <span className="mr-2">💾</span>
+                    설정 저장
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </form>
       )}

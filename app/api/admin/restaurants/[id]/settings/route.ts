@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { requireRole } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await requireRole('admin')
@@ -45,5 +46,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (inserts.length) await sb.from('tables').insert(inserts)
   }
 
-  return NextResponse.redirect(`/admin/restaurants/${resolvedParams.id}/settings`, 303)
+  return redirect(`/admin/restaurants/${resolvedParams.id}/settings`)
 }

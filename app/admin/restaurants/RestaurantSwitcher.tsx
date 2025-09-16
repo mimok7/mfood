@@ -9,9 +9,14 @@ export default function RestaurantSwitcher({ currentId, items }: { currentId: st
     <select
       className="border rounded px-3 py-2"
       value={currentId}
-      onChange={(e) => {
+      onChange={async (e) => {
         const id = e.target.value
         if (!id) return
+        try {
+          await fetch('/api/admin/restaurants/select', { method: 'POST', body: JSON.stringify({ id }), headers: { 'Content-Type': 'application/json' } })
+        } catch (e) {
+          // ignore
+        }
         window.location.href = `/admin/restaurants/${id}`
       }}
     >

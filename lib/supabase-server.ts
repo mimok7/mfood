@@ -14,12 +14,13 @@ export function createSupabaseServer() {
           const all = store.getAll()
           return all.map((c: { name: string; value: string }) => ({ name: c.name, value: c.value }))
         },
-        async setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
-          const store = await cookies()
-          cookiesToSet.forEach(({ name, value, options }) => {
-            // Next.js cookies().set accepts { name, value, ...options }
-            store.set({ name, value, ...options })
-          })
+        // Intentionally no-op: calling cookies().set during server component rendering
+        // is forbidden and will throw. For route handlers or server actions that need
+        // to set cookies, construct a server client inside that handler with an
+        // appropriate cookies implementation. Keeping setAll as a no-op prevents
+        // crashes during normal SSR.
+        async setAll(_: { name: string; value: string; options: CookieOptions }[]) {
+          return
         },
       },
     }
