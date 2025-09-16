@@ -6,7 +6,7 @@ import AddressFilter from './AddressFilter'
 export const dynamic = 'force-dynamic'
 
 interface AdminPageProps {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
