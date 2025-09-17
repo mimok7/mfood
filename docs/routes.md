@@ -1,7 +1,8 @@
 # 라우트 구조
 
 ## 게스트
-- /guest/qr/[token]
+- /guest/qr/[...slug] (예: /guest/qr/{restaurant_id}/{token})
+- /guest/waitlist
 - /api/guest/menu, /api/guest/order, /api/guest/waitlist
 
 ## 매니저

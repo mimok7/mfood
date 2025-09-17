@@ -43,7 +43,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
                   </div>
                   <div className='grid grid-cols-3 gap-2 items-start'>
                     {page.map((t: any) => {
-                      const url = `${base}/guest/qr/${t.token}`
+                      const url = `${base}/guest/qr/${rid}/${t.token}`
                       return (
                         <div key={t.id} className='flex flex-col items-center justify-center p-2 text-center'>
                           <div className='font-semibold'>{restaurant?.name}</div>
@@ -218,7 +218,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
               </div>
 
               <div className='flex justify-center mb-4'>
-                <Qr url={`${base}/guest/waitlist?restaurant=${rid}`} />
+                <Qr url={`${base}/guest/waitlist?restaurant_id=${rid}`} />
               </div>
 
               <div className='text-center mb-4'>
