@@ -196,7 +196,13 @@ BEGIN
   SELECT COALESCE(mi.station, 'main') INTO v_station FROM public.menu_items mi WHERE mi.id = NEW.item_id;
 
   INSERT INTO public.kitchen_queue (restaurant_id, order_item_id, station, status, created_at)
-  VALUES (v_restaurant_id, NEW.id, COALESCE(v_station, 'main'), 'queued', now());
+  VALUES (
+    v_restaurant_id,
+    NEW.id,
+    COALESCE(v_station, 'main'),
+    CASE WHEN COALESCE(v_station, 'main') = 'bar' THEN 'ready' ELSE 'queued' END,
+    now()
+  );
 
   RETURN NEW;
 END; $$;
@@ -218,7 +224,12 @@ END $$;
 
 -- backfill kitchen_queue for existing order_items that are missing
 INSERT INTO public.kitchen_queue (restaurant_id, order_item_id, station, status, created_at)
-SELECT o.restaurant_id, oi.id, COALESCE(mi.station, 'main'), 'queued', now()
+SELECT 
+  o.restaurant_id,
+  oi.id,
+  COALESCE(mi.station, 'main'),
+  CASE WHEN COALESCE(mi.station, 'main') = 'bar' THEN 'ready' ELSE 'queued' END,
+  now()
 FROM public.order_items oi
 JOIN public.orders o ON o.id = oi.order_id
 LEFT JOIN public.kitchen_queue kq ON kq.order_item_id = oi.id

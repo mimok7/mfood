@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Real-time sync utility for POS system
 'use client'
 

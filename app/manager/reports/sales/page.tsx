@@ -2,6 +2,8 @@ import { requireRole } from '@/lib/auth'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SalesReportPage() {
   const { restaurant_id } = await requireRole('manager')
   const supabase = createSupabaseServer()
@@ -30,6 +32,7 @@ export default async function SalesReportPage() {
           id,
           name,
           category_id,
+          price,
           menu_categories (
             id,
             name
@@ -38,7 +41,7 @@ export default async function SalesReportPage() {
       )
     `)
     .eq('restaurant_id', restaurant_id)
-    .eq('status', 'served')
+    .neq('status', 'cancelled')
     .gte('created_at', todayStart.toISOString())
     .lt('created_at', todayEnd.toISOString())
 
@@ -57,6 +60,7 @@ export default async function SalesReportPage() {
           id,
           name,
           category_id,
+          price,
           menu_categories (
             id,
             name
@@ -65,9 +69,9 @@ export default async function SalesReportPage() {
       )
     `)
     .eq('restaurant_id', restaurant_id)
-    .eq('status', 'served')
+    .neq('status', 'cancelled')
     .gte('created_at', monthStart.toISOString())
-    .lt('monthEnd', monthEnd.toISOString())
+    .lt('created_at', monthEnd.toISOString())
 
   // 매출 계산 함수
   const calculateSales = (orders: any[]) => {
@@ -78,24 +82,25 @@ export default async function SalesReportPage() {
 
     orders?.forEach(order => {
       order.order_items?.forEach((item: any) => {
-        const revenue = item.qty * item.price
+        const unitPrice = (item?.price ?? item?.menu_items?.price ?? 0) as number
+        const revenue = (item?.qty ?? 0) * unitPrice
         totalRevenue += revenue
 
         // 카테고리별 매출
-        const categoryName = item.menu_items?.menu_categories?.name || '기타'
+        const categoryName = item?.menu_items?.menu_categories?.name || '기타'
         if (!categorySales[categoryName]) {
           categorySales[categoryName] = { revenue: 0, count: 0 }
         }
         categorySales[categoryName].revenue += revenue
-        categorySales[categoryName].count += item.qty
+        categorySales[categoryName].count += (item?.qty ?? 0)
 
         // 메뉴별 매출
-        const itemName = item.menu_items?.name || '알 수 없음'
+        const itemName = item?.menu_items?.name || '알 수 없음'
         if (!itemSales[itemName]) {
           itemSales[itemName] = { revenue: 0, count: 0 }
         }
         itemSales[itemName].revenue += revenue
-        itemSales[itemName].count += item.qty
+        itemSales[itemName].count += (item?.qty ?? 0)
       })
     })
 

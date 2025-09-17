@@ -94,21 +94,21 @@ export default async function ManagerPage() {
       </div>
 
       {/* 빠른 액션 섹션 */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6'>
-        {/* 주문 */}
+      <div className='grid grid-cols-5 gap-6'>
+        {/* 주문/계산 (맨 왼쪽) */}
         <Link
-          href={`/manager/order`}
+          href={`/manager/billing`}
           className='block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden'
         >
-          <div className='bg-gradient-to-r from-blue-500 to-indigo-500 p-4'>
-            <div className='text-white text-2xl'>📋</div>
+          <div className='bg-gradient-to-r from-red-500 to-pink-500 p-4'>
+            <div className='text-white text-2xl'>🧮</div>
           </div>
           <div className='p-4'>
             <h3 className='text-lg font-semibold text-gray-900 mb-2 group-hover:text-green-700 transition-colors'>
-              주문
+              주문/계산
             </h3>
             <p className='text-sm text-gray-600'>
-              실시간 주문 확인 및 처리 상태 관리
+              결제 처리 및 계산서 관리
             </p>
           </div>
         </Link>
@@ -137,7 +137,7 @@ export default async function ManagerPage() {
           className='block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden'
         >
           <div className='bg-gradient-to-r from-teal-500 to-cyan-500 p-4'>
-            <div className='text-white text-2xl'>�️</div>
+            <div className='text-white text-2xl'>🍽️</div>
           </div>
           <div className='p-4'>
             <h3 className='text-lg font-semibold text-gray-900 mb-2 group-hover:text-green-700 transition-colors'>
@@ -167,23 +167,7 @@ export default async function ManagerPage() {
           </div>
         </Link>
 
-        {/* 계산 */}
-        <Link
-          href={`/manager/billing`}
-          className='block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden'
-        >
-          <div className='bg-gradient-to-r from-red-500 to-pink-500 p-4'>
-            <div className='text-white text-2xl'>💳</div>
-          </div>
-          <div className='p-4'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2 group-hover:text-green-700 transition-colors'>
-              계산
-            </h3>
-            <p className='text-sm text-gray-600'>
-              결제 처리 및 계산서 관리
-            </p>
-          </div>
-        </Link>
+        
 
         {/* 매출 */}
         <Link

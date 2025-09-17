@@ -4,6 +4,7 @@ import CartClientScript from '@/components/CartClientScript'
 import ClientCart from '@/components/ClientCart'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import ClientOrderPanel from '@/components/ClientOrderPanel'
+import QrOrderGuard from '@/components/QrOrderGuard'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -36,9 +37,9 @@ export default async function OrderQrPage({ params }: any) {
     .eq('restaurant_id', restaurantId)
     .maybeSingle()
 
-  const tableId = table?.id || token // fallback to token if table not found
-  const tableLabel = table?.name ?? `테이블 ${token}`
   const isValidTable = !!table
+  const tableId = isValidTable ? table.id : token
+  const tableLabel = isValidTable ? (table.name ?? `테이블 ${token}`) : `테이블 ${token}`
 
   let restaurantName = 'Restaurant'
   try {
@@ -63,7 +64,7 @@ export default async function OrderQrPage({ params }: any) {
     .eq('restaurant_id', restaurantId)
     .order('position', { ascending: true })
 
-  // Only try to create order if we have a valid table
+  // QR 전용 강제: 유효한 테이블(token+restaurant 일치)일 때만 주문 초기화 허용
   if (isValidTable) {
     await getOrCreateOpenOrder(tableId, 'qr')
   }
@@ -80,7 +81,13 @@ export default async function OrderQrPage({ params }: any) {
       </div>
 
       <div className="max-w-screen-sm mx-auto px-4 pb-32">
-        <ClientOrderPanel tableId={tableId} items={items} categories={categories} />
+        {!isValidTable ? (
+          <div className="bg-yellow-100 border border-yellow-300 text-yellow-900 rounded-xl p-4 text-center">
+            🔒 QR 인증이 필요합니다. 매장 QR을 스캔해 접속해 주세요.
+          </div>
+        ) : (
+          <ClientOrderPanel tableId={tableId} items={items} categories={categories} />
+        )}
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
@@ -104,6 +111,10 @@ export default async function OrderQrPage({ params }: any) {
           <CartClientScript />
         </div>
       </div>
+
+      {isValidTable && (
+        <QrOrderGuard restaurantId={restaurantId} token={token} tableId={tableId} />
+      )}
     </div>
   )
 }

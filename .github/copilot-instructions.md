@@ -61,6 +61,14 @@ npm run dev
 - Use `"use client"` directive consistently
 - Forms use `FormData` API with server-side processing
 
+### Design System & UI Patterns
+- **Color Scheme**: Orange/red gradient themes with blue and green accents
+- **Layout Patterns**: Responsive grid systems, card-based designs, gradient backgrounds
+- **Typography**: Consistent heading hierarchy with proper font weights
+- **Components**: Reusable button styles, form inputs with validation states, loading indicators
+- **Navigation**: Next.js Link components for client-side routing
+- **Responsive Design**: Mobile-first approach with tablet and desktop breakpoints
+
 ### Database Patterns
 - UUID primary keys with `gen_random_uuid()`
 - `updated_at` triggers via `set_updated_at()` function
@@ -84,6 +92,15 @@ npm run dev
 - `app/admin/restaurants/RestaurantsEditor.tsx`: Form state management pattern
 - `app/api/admin/restaurants/[id]/settings/route.ts`: Admin API with form processing
 
+### Marketing & Public Pages
+- `app/page.tsx`: Professional homepage with role-based redirects, feature showcases, and call-to-action sections
+- `app/auth/sign-in/page.tsx`: Enhanced login page with role-based guidance and improved UX
+- `app/auth/sign-up/page.tsx`: Comprehensive registration page with validation and benefits showcase
+- `app/features/page.tsx`: Detailed feature presentation for QR ordering, kitchen management, and analytics
+- `app/pricing/page.tsx`: Three-tier pricing plans with feature comparison and FAQ section
+- `app/contact/page.tsx`: Contact page with form handling and multiple communication channels
+- `app/not-found.tsx`: User-friendly 404 error page with navigation assistance
+
 ### Database Schema
 - `sql/001_schema.sql`: Core tables and relationships
 - `sql/002_policies.sql`: Row Level Security setup
@@ -106,5 +123,13 @@ npm run dev
 - Use appropriate Supabase client (admin for writes, server for reads)
 - Include role requirements at route start
 - Return consistent error formats
-- Use redirects for successful form submissions</content>
+- Use redirects for successful form submissions
+
+### When Creating Marketing/Public Pages
+- Maintain consistent branding with orange/red gradient themes
+- Implement responsive design for mobile/tablet/desktop
+- Use role-based redirects for authenticated users
+- Include proper SEO meta tags and accessibility features
+- Follow form validation patterns with user feedback
+- Ensure navigation consistency across all pages</content>
 <parameter name="filePath">c:\Users\saint\mfood\.github\copilot-instructions.md

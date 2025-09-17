@@ -1,13 +1,33 @@
 import { requireRole } from '@/lib/auth'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import Link from 'next/link'
+import { revalidatePath } from 'next/cache'
+
+export const dynamic = 'force-dynamic'
 
 export default async function ServingPage() {
   const { restaurant_id } = await requireRole('manager')
   const supabase = createSupabaseServer()
 
-  // 준비 완료된 주문 아이템들 가져오기 (서빙 대기)
-  const { data: readyItemsRaw } = await supabase
+  // 서버 액션: 서빙 완료 처리
+  async function markServed(formData: FormData) {
+    'use server'
+    const id = String(formData.get('id') || '')
+    if (!id) return
+    const sb = createSupabaseServer()
+    const { error } = await sb
+      .from('kitchen_queue')
+      .update({ status: 'served' })
+      .eq('id', id)
+      .eq('restaurant_id', restaurant_id)
+    if (error) {
+      console.error('서빙 완료 업데이트 실패:', error)
+    }
+    revalidatePath('/manager/serving')
+  }
+
+  // kitchen_queue에서 ready/served 모두 조회 후 분류
+  const { data: itemsRaw, error } = await supabase
     .from('kitchen_queue')
     .select(`
       id,
@@ -17,8 +37,8 @@ export default async function ServingPage() {
       order_item_id,
       order_items (
         id,
-        quantity,
-        notes,
+        qty,
+        note,
         menu_items (
           id,
           name
@@ -26,7 +46,6 @@ export default async function ServingPage() {
         orders (
           id,
           table_id,
-          status,
           tables (
             name
           )
@@ -34,34 +53,19 @@ export default async function ServingPage() {
       )
     `)
     .eq('restaurant_id', restaurant_id)
-    .eq('status', 'ready')
+    .in('status', ['ready','served'])
     .order('created_at', { ascending: true })
 
-  const readyItems = (readyItemsRaw ?? []) as any[]
-
-  // 테이블별로 그룹화
-  const itemsByTable = (readyItems ?? []).reduce((acc: Record<string, { tableId: string | null, items: any[] }>, item: any) => {
-    const tableId = item.order_items?.orders?.table_id
-    const tableName = item.order_items?.orders?.tables?.name || '테이블 정보 없음'
-
-    if (!acc[tableName]) {
-      acc[tableName] = {
-        tableId,
-        items: []
-      }
-    }
-    acc[tableName].items.push(item)
-    return acc
-  }, {} as Record<string, { tableId: string | null, items: any[] }>)
-
-  const getStationDisplay = (station: string) => {
-    switch (station) {
-      case 'main': return '🍽️ 메인'
-      case 'bar': return '🍷 바'
-      case 'dessert': return '🍰 디저트'
-      default: return station
-    }
+  if (error) {
+    console.error('서빙 페이지 조회 오류:', error)
   }
+
+  const items = (itemsRaw ?? []) as any[]
+  const readyItems = items.filter(i => i.status === 'ready')
+  const servedItems = items.filter(i => i.status === 'served')
+
+  const mealsReady = readyItems.filter(i => (i.station || 'main') === 'main' || (i.station || '') === 'dessert')
+  const drinksReady = readyItems.filter(i => (i.station || 'main') === 'bar')
 
   return (
     <div className='space-y-6'>
@@ -84,125 +88,157 @@ export default async function ServingPage() {
         </div>
       </div>
 
-      {/* 테이블별 서빙 목록 */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
-        {Object.entries(itemsByTable).map(([tableName, { tableId, items }]) => (
-          <div key={tableId || tableName} className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
-            <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
-              <h2 className='text-xl font-semibold text-gray-900 flex items-center justify-between'>
-                <span>🪑 {tableName}</span>
-                <span className='text-sm text-gray-500'>({items.length}개)</span>
-              </h2>
-            </div>
-
-            <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
-              {items.length > 0 ? (
-                items.map((item) => {
-                  const orderItem = item.order_items
-                  const menuItem = orderItem?.menu_items
-                  const order = orderItem?.orders
-
-                  return (
-                    <div
-                      key={item.id}
-                      className='border rounded-lg p-4 bg-white hover:shadow-md transition-shadow'
-                    >
-                      {/* 주문 정보 헤더 */}
-                      <div className='flex items-center justify-between mb-3'>
-                        <div className='flex items-center space-x-2'>
-                          <span className='text-sm font-medium text-gray-900'>
-                            주문 #{order?.id?.slice(0, 8)}
-                          </span>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800`}>
-                            준비완료
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* 메뉴 정보 */}
-                      <div className='space-y-2'>
-                        <div className='flex items-center justify-between'>
-                          <h3 className='text-lg font-semibold text-gray-900'>
-                            {menuItem?.name || '메뉴 정보 없음'}
-                          </h3>
-                          <span className='text-sm text-gray-600'>
-                            × {orderItem?.quantity || 1}
-                          </span>
-                        </div>
-
-                        <div className='flex items-center space-x-2 text-sm text-gray-600'>
-                          <span>{getStationDisplay(item.station || 'main')}</span>
-                          <span>•</span>
-                          <span>
-                            {new Date(item.created_at).toLocaleTimeString('ko-KR', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
-                        </div>
-
-                        {orderItem?.notes && (
-                          <div className='bg-yellow-50 border border-yellow-200 rounded p-2'>
-                            <p className='text-sm text-yellow-800'>
-                              📝 {orderItem.notes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 서빙 액션 버튼 */}
-                      <div className='flex gap-2 mt-3'>
-                        <button className='flex-1 bg-blue-600 text-white text-sm py-2 px-3 rounded hover:bg-blue-700 transition-colors'>
-                          서빙 중
-                        </button>
-                        <button className='flex-1 bg-green-600 text-white text-sm py-2 px-3 rounded hover:bg-green-700 transition-colors'>
-                          서빙 완료
-                        </button>
-                      </div>
-                    </div>
-                  )
-                })
-              ) : (
-                <div className='text-center py-8 text-gray-500'>
-                  <div className='text-4xl mb-2'>🍽️</div>
-                  <p>서빙할 주문이 없습니다</p>
-                </div>
-              )}
-            </div>
+      {/* 3개 카드: 식사/안주, 주류/음료, 서빙완료 */}
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        {/* 식사/안주 */}
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
+          <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
+            <h2 className='text-xl font-semibold text-gray-900 flex items-center justify-between'>
+              <span>🍽️ 식사/안주</span>
+              <span className='text-sm text-gray-500'>({mealsReady.length}개)</span>
+            </h2>
           </div>
-        ))}
+          <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
+            {mealsReady.length > 0 ? (
+              mealsReady.map((item) => {
+                const orderItem = item.order_items
+                const menuItem = orderItem?.menu_items
+                const table = orderItem?.orders?.tables
+                return (
+                  <div key={item.id} className='border rounded-lg p-4 bg-white hover:shadow-md transition-shadow'>
+                    <div className='flex items-center justify-between mb-2 text-sm text-gray-700'>
+                      <span className='font-medium'>🪑 {table?.name || '테이블 정보 없음'}</span>
+                      <span className='text-gray-500'>{new Date(item.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className='space-y-2'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        {menuItem?.name || '메뉴 정보 없음'} × {orderItem?.qty || 1}
+                      </h3>
+                      {orderItem?.note && (
+                        <div className='bg-yellow-50 border border-yellow-200 rounded p-2'>
+                          <p className='text-sm text-yellow-800'>📝 {orderItem.note}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className='flex gap-2 mt-3 justify-end'>
+                      <form action={markServed}>
+                        <input type='hidden' name='id' value={item.id} />
+                        <button className='bg-green-600 text-white text-sm py-2 px-3 rounded hover:bg-green-700 transition-colors'>서빙 완료</button>
+                      </form>
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className='text-center py-8 text-gray-500'>
+                <div className='text-4xl mb-2'>🍽️</div>
+                <p>서빙할 식사/안주가 없습니다</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 주류/음료 */}
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
+          <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
+            <h2 className='text-xl font-semibold text-gray-900 flex items-center justify-between'>
+              <span>🍷 주류/음료</span>
+              <span className='text-sm text-gray-500'>({drinksReady.length}개)</span>
+            </h2>
+          </div>
+          <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
+            {drinksReady.length > 0 ? (
+              drinksReady.map((item) => {
+                const orderItem = item.order_items
+                const menuItem = orderItem?.menu_items
+                const table = orderItem?.orders?.tables
+                return (
+                  <div key={item.id} className='border rounded-lg p-4 bg-white hover:shadow-md transition-shadow'>
+                    <div className='flex items-center justify-between mb-2 text-sm text-gray-700'>
+                      <span className='font-medium'>🪑 {table?.name || '테이블 정보 없음'}</span>
+                      <span className='text-gray-500'>{new Date(item.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className='space-y-2'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        {menuItem?.name || '메뉴 정보 없음'} × {orderItem?.qty || 1}
+                      </h3>
+                      {orderItem?.note && (
+                        <div className='bg-yellow-50 border border-yellow-200 rounded p-2'>
+                          <p className='text-sm text-yellow-800'>📝 {orderItem.note}</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className='flex gap-2 mt-3 justify-end'>
+                      <form action={markServed}>
+                        <input type='hidden' name='id' value={item.id} />
+                        <button className='bg-green-600 text-white text-sm py-2 px-3 rounded hover:bg-green-700 transition-colors'>서빙 완료</button>
+                      </form>
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className='text-center py-8 text-gray-500'>
+                <div className='text-4xl mb-2'>🥂</div>
+                <p>서빙할 주류/음료가 없습니다</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 서빙완료 */}
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
+          <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
+            <h2 className='text-xl font-semibold text-gray-900 flex items-center justify-between'>
+              <span>✅ 서빙완료</span>
+              <span className='text-sm text-gray-500'>({servedItems.length}개)</span>
+            </h2>
+          </div>
+          <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
+            {servedItems.length > 0 ? (
+              servedItems.map((item) => {
+                const orderItem = item.order_items
+                const menuItem = orderItem?.menu_items
+                const table = orderItem?.orders?.tables
+                return (
+                  <div key={item.id} className='border rounded-lg p-4 bg-white hover:shadow-md transition-shadow'>
+                    <div className='flex items-center justify-between mb-2 text-sm text-gray-700'>
+                      <span className='font-medium'>🪑 {table?.name || '테이블 정보 없음'}</span>
+                      <span className='text-gray-500'>{new Date(item.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className='space-y-2'>
+                      <h3 className='text-lg font-semibold text-gray-900'>
+                        {menuItem?.name || '메뉴 정보 없음'} × {orderItem?.qty || 1}
+                      </h3>
+                      {orderItem?.note && (
+                        <div className='bg-yellow-50 border border-yellow-200 rounded p-2'>
+                          <p className='text-sm text-yellow-800'>📝 {orderItem.note}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className='text-center py-8 text-gray-500'>
+                <div className='text-4xl mb-2'>✅</div>
+                <p>서빙 완료된 항목이 없습니다</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* 서빙할 주문이 없을 때 */}
-      {Object.keys(itemsByTable).length === 0 && (
+      {/* 모두 비었을 때 */}
+      {mealsReady.length === 0 && drinksReady.length === 0 && servedItems.length === 0 && (
         <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
           <div className='p-12 text-center'>
             <div className='text-6xl mb-4'>🍽️</div>
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>서빙할 주문이 없습니다</h3>
-            <p className='text-gray-500'>준비 완료된 주문이 있으면 여기에 표시됩니다.</p>
+            <h3 className='text-lg font-medium text-gray-900 mb-2'>표시할 항목이 없습니다</h3>
+            <p className='text-gray-500'>준비 완료 또는 서빙 완료된 항목이 여기 표시됩니다.</p>
           </div>
         </div>
       )}
-
-      {/* 요약 정보 */}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
-          <div className='text-center'>
-            <div className='text-3xl font-bold text-green-600 mb-2'>
-              {readyItems?.length || 0}
-            </div>
-            <div className='text-sm text-gray-600'>서빙 대기</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
-          <div className='text-center'>
-            <div className='text-3xl font-bold text-blue-600 mb-2'>
-              {Object.keys(itemsByTable).length}
-            </div>
-            <div className='text-sm text-gray-600'>활성 테이블</div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

@@ -22,11 +22,17 @@ export async function POST(req: NextRequest) {
   const token = payload.token || null
   const waitlistToken = payload.wt || payload.waitlist_token || null
 
-    const supabase = supabaseAdmin()
+  const supabase = supabaseAdmin()
 
     // restaurant_id 검증 (token으로 추가 검증)
     if (!restaurant_id) {
       if (contentType.includes('application/json')) return NextResponse.json({ error: 'restaurant_id required' }, { status: 400 })
+      return NextResponse.redirect(req.headers.get('referer') || '/', 303)
+    }
+
+    // QR 필수: 대기 전용(wt) 또는 테이블 token 둘 중 하나는 반드시 제공
+    if (!token && !waitlistToken) {
+      if (contentType.includes('application/json')) return NextResponse.json({ error: 'qr required' }, { status: 400 })
       return NextResponse.redirect(req.headers.get('referer') || '/', 303)
     }
 

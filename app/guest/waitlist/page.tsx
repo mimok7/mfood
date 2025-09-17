@@ -9,6 +9,7 @@ export default async function GuestPage({ searchParams }: { searchParams: Promis
   const params = await searchParams
   const token = params.token as string
   const type = params.type as string
+  const wt = params.wt as string
   // support both 'restaurant' and 'restaurant_id' query param names
   const restaurantId = (params.restaurant as string) || (params.restaurant_id as string) || (params.rid as string)
   console.log('page.tsx restaurantId:', restaurantId, 'params:', params)
@@ -18,7 +19,8 @@ export default async function GuestPage({ searchParams }: { searchParams: Promis
 
   // QR 타입에 따른 처리
   const isWaitingQR = type === 'waiting' || (!token && !type)
-  const isOrderQR = token !== null
+  const isOrderQR = token != null && token !== ''
+  const hasQrProof = !!wt || !!token
 
   // 식당 이름 가져오기 (restaurant_id 우선)
   const supabase = supabaseAdmin()
@@ -73,6 +75,24 @@ export default async function GuestPage({ searchParams }: { searchParams: Promis
 
   // QR 타입에 따른 UI 렌더링
   if (isWaitingQR) {
+    // QR 필수: wt 또는 token이 없으면 입력 UI를 가리지 않고, 안내만 표시
+    if (!hasQrProof) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100">
+          <main className="max-w-screen-sm mx-auto px-6 py-10">
+            <div className="bg-yellow-500 rounded-2xl shadow-lg p-6 border border-gray-100 mb-6 text-white">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🔒</span>
+                <div className="text-left">
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-white">QR이 필요합니다</h1>
+                  <p className="text-sm md:text-base text-yellow-100 mt-0.5">대기 등록은 QR 스캔으로만 가능합니다. 매장 QR을 스캔해 주세요.</p>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      )
+    }
     // 대기 QR: 대기 신청 UI
     return (
       <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100">
@@ -86,7 +106,7 @@ export default async function GuestPage({ searchParams }: { searchParams: Promis
               </div>
             </div>
           </div>
-          <WaitingForm restaurantId={restaurantId ?? undefined} wt={(params.wt as string) ?? undefined} />
+          <WaitingForm restaurantId={restaurantId ?? undefined} wt={wt ?? undefined} />
         </main>
       </div>
     )
