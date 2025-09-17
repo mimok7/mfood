@@ -18,8 +18,9 @@ export async function POST(req: NextRequest) {
     const name = String(payload.name || '').trim()
     const phone = String(payload.phone || '').trim()
     const partySize = parseInt(String(payload.party_size || payload.partySize || '1'), 10) || 1
-    const restaurant_id = payload.restaurant_id || null
-    const token = payload.token || null
+  const restaurant_id = payload.restaurant_id || null
+  const token = payload.token || null
+  const waitlistToken = payload.wt || payload.waitlist_token || null
 
     const supabase = supabaseAdmin()
 
@@ -34,6 +35,15 @@ export async function POST(req: NextRequest) {
       const { data: table } = await supabase.from('tables').select('restaurant_id').eq('token', token).eq('restaurant_id', restaurant_id).maybeSingle()
       if (!table) {
         if (contentType.includes('application/json')) return NextResponse.json({ error: 'invalid token for restaurant' }, { status: 400 })
+        return NextResponse.redirect(req.headers.get('referer') || '/', 303)
+      }
+    }
+
+    // 웨이팅 토큰이 제공되면 레스토랑의 waitlist_token과 일치하는지 검증
+    if (waitlistToken) {
+      const { data: r } = await supabase.from('restaurants').select('id, waitlist_token').eq('id', restaurant_id).maybeSingle()
+      if (!r || r.waitlist_token !== waitlistToken) {
+        if (contentType.includes('application/json')) return NextResponse.json({ error: 'invalid waitlist token' }, { status: 400 })
         return NextResponse.redirect(req.headers.get('referer') || '/', 303)
       }
     }

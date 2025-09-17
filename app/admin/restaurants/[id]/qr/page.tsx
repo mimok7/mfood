@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { PrintButton } from './PrintButton'
+import { headers } from 'next/headers'
 
 function Qr({ url, className = "", size = 250 }: { url: string, className?: string, size?: number }) {
   const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`
@@ -16,8 +17,15 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
   const resolvedParams = params ? await params : undefined
   const rid = resolvedParams?.id
   const { data: tables } = await sb.from('tables').select('id, name, token, capacity').eq('restaurant_id', rid).order('created_at')
-  const { data: restaurant } = await sb.from('restaurants').select('name').eq('id', rid).maybeSingle()
-  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+  const { data: restaurant } = await sb.from('restaurants').select('name, waitlist_token').eq('id', rid).maybeSingle()
+  const displayName = restaurant?.name ?? ''
+  const safeDisplayName = displayName || `식당 ${rid?.slice(0,8) ?? ''}`
+  const hdrs = await headers()
+  const proto = hdrs.get('x-forwarded-proto')
+    ?? (process.env.NEXT_PUBLIC_BASE_URL?.startsWith('https') ? 'https' : 'http')
+  const host = hdrs.get('host')
+    ?? (process.env.NEXT_PUBLIC_BASE_URL ? process.env.NEXT_PUBLIC_BASE_URL.replace(/^https?:\/\//, '') : 'localhost:3000')
+  const base = `${proto}://${host}`
 
   return (
     <div className='space-y-6'>
@@ -39,15 +47,16 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
                   className='print:block w-full p-4'
                 >
                   <div className='w-full text-center mb-4'>
-                    <h1 className='text-2xl font-semibold text-gray-900'>{restaurant?.name}</h1>
+                    <h1 className='text-2xl font-semibold text-gray-900'>{displayName}</h1>
                   </div>
                   <div className='grid grid-cols-3 gap-2 items-start'>
                     {page.map((t: any) => {
                       const url = `${base}/guest/qr/${rid}/${t.token}`
                       return (
                         <div key={t.id} className='flex flex-col items-center justify-center p-2 text-center'>
-                          <div className='font-semibold'>{restaurant?.name}</div>
-                          <div className='text-sm text-gray-700 mb-1'>{t.name} ({t.capacity || 'N/A'}명)</div>
+                          <div className='font-semibold text-lg mb-1'>{t.name}</div>
+                          <div className='text-sm text-gray-700 mb-1'>{displayName} · {t.capacity || 'N/A'}명</div>
+                          <div className='mb-2 text-sm text-gray-600'>{displayName}</div>
                           <Qr url={url} size={180} className='w-44 h-44 p-1' />
                           <div className='text-xs text-gray-600 mt-1'>📱 스캔 후 바로 주문하기</div>
                         </div>
@@ -60,14 +69,15 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
               {/* append waiting QR as its own page (3 duplicates) */}
               <div style={{ pageBreakAfter: 'auto' }} className='print:block w-full p-4'>
                 <div className='w-full text-center mb-4'>
-                  <h1 className='text-2xl font-semibold text-gray-900'>{restaurant?.name}</h1>
+                  <h1 className='text-2xl font-semibold text-gray-900'>{displayName}</h1>
                 </div>
                 <div className='grid grid-cols-3 gap-4 items-start'>
                   {Array.from({ length: 3 }).map((_, idx) => (
                     <div key={idx} className='flex flex-col items-center justify-center p-2 text-center'>
-                      <div className='font-semibold mb-1'>{restaurant?.name}</div>
+                      <div className='font-semibold text-lg mb-1'>{displayName}</div>
                       <div className='text-lg text-gray-700 mb-1'>대기 등록</div>
-                      <Qr url={`${base}/guest/waitlist?restaurant_id=${rid}`} size={180} className='w-44 h-44 p-1' />
+                      <div className='mb-2 text-sm text-gray-600'>{displayName}</div>
+                      <Qr url={`${base}/guest/waitlist?restaurant_id=${rid}${restaurant?.waitlist_token ? `&wt=${restaurant.waitlist_token}` : ''}`} size={180} className='w-44 h-44 p-1' />
                       <div className='text-xs text-gray-600 mt-1'>📝 대기자 등록 후 순번 확인</div>
                     </div>
                   ))}
@@ -88,22 +98,25 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
               <span className='mr-3'>📱</span>
               QR 코드 관리
             </h1>
-            <p className='text-green-100'>{restaurant?.name} 레스토랑의 테이블 QR 코드를 관리하세요</p>
+            <p className='text-green-100'>{displayName} 레스토랑의 테이블 QR 코드를 관리하세요</p>
           </div>
           <PrintButton />
         </div>
-        <div className='bg-green-700 bg-opacity-50 rounded-lg p-4 text-sm'>
-          <div className='flex items-center mb-2'>
-            <span className='mr-2'>ℹ️</span>
-            <strong>QR 코드 사용법:</strong>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='bg-green-700 bg-opacity-50 rounded-lg p-4 text-sm'>
+            <div className='flex items-center mb-2'>
+              <span className='mr-2'>ℹ️</span>
+              <strong>QR 코드 사용법:</strong>
+            </div>
+            <ul className='text-green-100 space-y-1 ml-6'>
+              <li>• 고객이 QR 코드를 스캔하면 주문 페이지로 이동합니다</li>
+              <li>• 각 테이블마다 고유한 QR 코드가 생성됩니다</li>
+              <li>• 웨이팅 QR 코드를 입구에 부착하여 대기 등록을 받으세요</li>
+              <li>• QR 코드를 인쇄하여 테이블과 입구에 부착하세요</li>
+            </ul>
           </div>
-          <ul className='text-green-100 space-y-1 ml-6'>
-            <li>• 고객이 QR 코드를 스캔하면 주문 페이지로 이동합니다</li>
-            <li>• 각 테이블마다 고유한 QR 코드가 생성됩니다</li>
-            <li>• 웨이팅 QR 코드를 입구에 부착하여 대기 등록을 받으세요</li>
-            <li>• QR 코드를 인쇄하여 테이블과 입구에 부착하세요</li>
-          </ul>
-          <div className='mt-3 pt-3 border-t border-green-600'>
+
+          <div className='bg-green-700 bg-opacity-50 rounded-lg p-4 text-sm'>
             <div className='flex items-center mb-1'>
               <span className='mr-2'>🖨️</span>
               <strong>PDF 인쇄 팁:</strong>
@@ -120,12 +133,26 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
 
       {/* QR 코드 그리드 */}
       <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
-        <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
+        <div className='bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between gap-4'>
           <h2 className='text-xl font-semibold text-gray-900 flex items-center'>
             <span className='mr-2'>🔗</span>
             테이블 QR 코드
           </h2>
-          <p className='text-sm text-gray-600 mt-1'>총 {tables?.length ?? 0}개의 테이블 QR 코드가 생성되었습니다</p>
+          <div className='flex items-center gap-3'>
+            <p className='text-sm text-gray-600'>총 {tables?.length ?? 0}개</p>
+            <form method="post" action={`/api/admin/restaurants/${rid}/qr/regenerate`} className='print:hidden'>
+              <input type="hidden" name="all" value="1" />
+              <button type="submit" className='inline-flex items-center gap-2 bg-red-600 text-white text-xs font-semibold py-2 px-3 rounded-md hover:bg-red-700 transition-colors'>
+                🔄 전체 새 생성
+              </button>
+            </form>
+            <form method="post" action={`/api/admin/restaurants/${rid}/qr/regenerate`} className='print:hidden'>
+              <input type="hidden" name="waitlist" value="1" />
+              <button type="submit" className='inline-flex items-center gap-2 bg-orange-600 text-white text-xs font-semibold py-2 px-3 rounded-md hover:bg-orange-700 transition-colors'>
+                ⏳ 대기 QR 새 생성
+              </button>
+            </form>
+          </div>
         </div>
 
         {tables && tables.length > 0 ? (
@@ -136,10 +163,10 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
                 return (
                   <div key={t.id} className='bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200'>
                     <div className='text-center mb-4'>
-                      <div className='text-sm font-medium text-gray-700 mb-2 bg-white px-3 py-1 rounded-full inline-block'>
-                        🏪 {restaurant?.name}
+                        <div className='text-sm font-medium text-gray-700 mb-2 bg-white px-3 py-1 rounded-full inline-block'>
+                        🏪 {safeDisplayName}
                       </div>
-                      <h3 className='text-lg font-semibold text-gray-900 mb-1'>{t.name}</h3>
+                      <h3 className='text-lg font-semibold text-gray-900 mb-1'>{t.name || `테이블 ${t.id?.slice(0,8) ?? ''}`}</h3>
                       <div className='text-sm text-gray-600 bg-white px-3 py-1 rounded-full inline-block'>
                         🪑 {t.capacity || 4}명 수용
                       </div>
@@ -208,7 +235,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
             <span className='mr-2'>⏳</span>
             웨이팅 QR 코드
           </h2>
-          <p className='text-sm text-gray-600 mt-1'>고객이 대기 등록을 할 수 있는 QR 코드입니다</p>
+          <p className='text-sm text-gray-600 mt-1'>총 {tables?.length ?? 0}개의 테이블 QR 코드가 생성되었습니다</p>
         </div>
 
         <div className='p-6'>
@@ -216,7 +243,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
             <div className='bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200'>
               <div className='text-center mb-4'>
                 <div className='text-sm font-medium text-gray-700 mb-2 bg-white px-3 py-1 rounded-full inline-block'>
-                  🏪 {restaurant?.name}
+                  🏪 {displayName}
                 </div>
                 <h3 className='text-lg font-semibold text-gray-900 mb-1'>대기 등록</h3>
                 <div className='text-sm text-gray-600 bg-white px-3 py-1 rounded-full inline-block'>
@@ -225,7 +252,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
               </div>
 
               <div className='flex justify-center mb-4'>
-                <Qr url={`${base}/guest/waitlist?restaurant_id=${rid}`} />
+                <Qr url={`${base}/guest/waitlist?restaurant_id=${rid}${restaurant?.waitlist_token ? `&wt=${restaurant.waitlist_token}` : ''}`} />
               </div>
 
               <div className='text-center mb-4'>
@@ -238,13 +265,13 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
                 <div className='bg-white border border-gray-200 rounded-lg p-3'>
                   <div className='text-xs text-gray-500 mb-1'>웨이팅 URL</div>
                   <div className='text-xs text-orange-600 break-all font-mono bg-orange-50 p-2 rounded'>
-                    {`${base}/guest/waitlist?restaurant_id=${rid}`}
+                    {`${base}/guest/waitlist?restaurant_id=${rid}${restaurant?.waitlist_token ? `&wt=${restaurant.waitlist_token}` : ''}`}
                   </div>
                 </div>
 
                 <div className='flex gap-2 print:hidden'>
                   <a
-                    href={`${base}/guest/waitlist?restaurant_id=${rid}`}
+                    href={`${base}/guest/waitlist?restaurant_id=${rid}${restaurant?.waitlist_token ? `&wt=${restaurant.waitlist_token}` : ''}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className='w-full bg-orange-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors text-center'

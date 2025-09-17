@@ -13,6 +13,8 @@ export default async function UsagePage({ params }: { params?: Promise<{ id: str
     .eq('id', restaurantId)
     .maybeSingle()
 
+  const safeRestaurantName = restaurant?.name || `식당 ${restaurantId?.slice(0,8) ?? ''}`
+
   // 기간별 주문 통계 계산을 위한 헬퍼 함수
   const getOrderStats = async (startDate: Date) => {
     const { count } = await sb
@@ -138,7 +140,7 @@ export default async function UsagePage({ params }: { params?: Promise<{ id: str
       {/* 헤더 섹션 */}
       <div className='bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-lg shadow-lg'>
         <h1 className='text-3xl font-bold mb-2'>📈 사용량 분석</h1>
-        <p className='text-purple-100'>{restaurant?.name} 레스토랑의 상세한 사용량 통계를 확인하세요</p>
+  <p className='text-purple-100'>{safeRestaurantName} 레스토랑의 상세한 사용량 통계를 확인하세요</p>
       </div>
 
       {/* 주요 지표 */}

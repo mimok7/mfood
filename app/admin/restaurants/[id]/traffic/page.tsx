@@ -13,6 +13,8 @@ export default async function TrafficPage({ params }: { params?: Promise<{ id: s
     .eq('id', restaurantId)
     .maybeSingle()
 
+  const safeRestaurantName = restaurant?.name || `식당 ${restaurantId?.slice(0,8) ?? ''}`
+
   // 오늘의 주문 수
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -97,7 +99,7 @@ export default async function TrafficPage({ params }: { params?: Promise<{ id: s
       {/* 헤더 섹션 */}
       <div className='bg-gradient-to-r from-green-600 to-teal-600 text-white p-6 rounded-lg shadow-lg'>
         <h1 className='text-3xl font-bold mb-2'>📊 트래픽 분석</h1>
-        <p className='text-green-100'>{restaurant?.name} 레스토랑의 실시간 트래픽 현황을 확인하세요</p>
+  <p className='text-green-100'>{safeRestaurantName} 레스토랑의 실시간 트래픽 현황을 확인하세요</p>
       </div>
 
       {/* 주요 지표 */}

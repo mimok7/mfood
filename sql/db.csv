@@ -229,6 +229,7 @@ public,menu_items,is_active,boolean
 public,menu_items,created_at,timestamp with time zone
 public,menu_items,updated_at,timestamp with time zone
 public,menu_items,station,text
+public,menu_items,image_url,text
 public,menu_option_groups,id,uuid
 public,menu_option_groups,restaurant_id,uuid
 public,menu_option_groups,menu_item_id,uuid
@@ -293,6 +294,8 @@ public,user_profile,role,text
 public,user_profile,restaurant_id,uuid
 public,user_profile,created_at,timestamp with time zone
 public,user_profile,updated_at,timestamp with time zone
+public,user_profile,email,text
+public,user_profile,full_name,text
 public,waitlist,id,uuid
 public,waitlist,restaurant_id,uuid
 public,waitlist,name,text
@@ -315,6 +318,54 @@ realtime,messages,private,boolean
 realtime,messages,updated_at,timestamp without time zone
 realtime,messages,inserted_at,timestamp without time zone
 realtime,messages,id,uuid
+realtime,messages_2025_09_15,topic,text
+realtime,messages_2025_09_15,extension,text
+realtime,messages_2025_09_15,payload,jsonb
+realtime,messages_2025_09_15,event,text
+realtime,messages_2025_09_15,private,boolean
+realtime,messages_2025_09_15,updated_at,timestamp without time zone
+realtime,messages_2025_09_15,inserted_at,timestamp without time zone
+realtime,messages_2025_09_15,id,uuid
+realtime,messages_2025_09_16,topic,text
+realtime,messages_2025_09_16,extension,text
+realtime,messages_2025_09_16,payload,jsonb
+realtime,messages_2025_09_16,event,text
+realtime,messages_2025_09_16,private,boolean
+realtime,messages_2025_09_16,updated_at,timestamp without time zone
+realtime,messages_2025_09_16,inserted_at,timestamp without time zone
+realtime,messages_2025_09_16,id,uuid
+realtime,messages_2025_09_17,topic,text
+realtime,messages_2025_09_17,extension,text
+realtime,messages_2025_09_17,payload,jsonb
+realtime,messages_2025_09_17,event,text
+realtime,messages_2025_09_17,private,boolean
+realtime,messages_2025_09_17,updated_at,timestamp without time zone
+realtime,messages_2025_09_17,inserted_at,timestamp without time zone
+realtime,messages_2025_09_17,id,uuid
+realtime,messages_2025_09_18,topic,text
+realtime,messages_2025_09_18,extension,text
+realtime,messages_2025_09_18,payload,jsonb
+realtime,messages_2025_09_18,event,text
+realtime,messages_2025_09_18,private,boolean
+realtime,messages_2025_09_18,updated_at,timestamp without time zone
+realtime,messages_2025_09_18,inserted_at,timestamp without time zone
+realtime,messages_2025_09_18,id,uuid
+realtime,messages_2025_09_19,topic,text
+realtime,messages_2025_09_19,extension,text
+realtime,messages_2025_09_19,payload,jsonb
+realtime,messages_2025_09_19,event,text
+realtime,messages_2025_09_19,private,boolean
+realtime,messages_2025_09_19,updated_at,timestamp without time zone
+realtime,messages_2025_09_19,inserted_at,timestamp without time zone
+realtime,messages_2025_09_19,id,uuid
+realtime,messages_2025_09_20,topic,text
+realtime,messages_2025_09_20,extension,text
+realtime,messages_2025_09_20,payload,jsonb
+realtime,messages_2025_09_20,event,text
+realtime,messages_2025_09_20,private,boolean
+realtime,messages_2025_09_20,updated_at,timestamp without time zone
+realtime,messages_2025_09_20,inserted_at,timestamp without time zone
+realtime,messages_2025_09_20,id,uuid
 realtime,schema_migrations,version,bigint
 realtime,schema_migrations,inserted_at,timestamp without time zone
 realtime,subscription,id,bigint

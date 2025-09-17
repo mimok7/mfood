@@ -24,9 +24,11 @@ export default function WaitingForm() {
     try {
       // try to read restaurant_id from URL (e.g., ?restaurant_id=uuid)
       let restaurantId: string | null = null
+      let wt: string | null = null
       try {
         const sp = new URLSearchParams(window.location.search)
         restaurantId = sp.get('restaurant_id')
+        wt = sp.get('wt')
       } catch {}
 
       const payload: any = {
@@ -34,7 +36,8 @@ export default function WaitingForm() {
         phone,
         party_size: partySize,
       }
-      if (restaurantId) payload.restaurant_id = restaurantId
+  if (restaurantId) payload.restaurant_id = restaurantId
+  if (wt) payload.wt = wt
 
       const res = await fetch('/api/guest/waitlist', {
         method: 'POST',

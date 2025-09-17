@@ -12,6 +12,8 @@ export default async function SecurityPage({ params }: { params?: Promise<{ id: 
     .eq('id', rid)
     .maybeSingle()
 
+  const safeRestaurantName = restaurant?.name || `식당 ${rid?.slice(0,8) ?? ''}`
+
   const { data: tables } = await supabaseAdmin()
     .from('tables')
     .select('id, name, token, created_at')
@@ -26,7 +28,7 @@ export default async function SecurityPage({ params }: { params?: Promise<{ id: 
           <span className='mr-3'>🔒</span>
           보안 설정
         </h1>
-        <p className='text-red-100 mb-4'>{restaurant?.name} 레스토랑의 보안 설정을 관리하세요</p>
+  <p className='text-red-100 mb-4'>{safeRestaurantName} 레스토랑의 보안 설정을 관리하세요</p>
         <div className='bg-red-700 bg-opacity-50 rounded-lg p-4 text-sm'>
           <div className='flex items-center mb-2'>
             <span className='mr-2'>⚠️</span>
