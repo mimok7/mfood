@@ -5,6 +5,8 @@ create or replace function public.is_admin()
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select public.current_user_role() = 'admin';
 $$;
@@ -14,6 +16,8 @@ create or replace function public.is_manager_or_admin(p_restaurant_id uuid)
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     (public.current_user_role() = 'admin') or
@@ -45,18 +49,31 @@ drop policy if exists "read order items" on public.order_items;
 
 
 -- == Policies for `user_profile` ==
--- Users can view their own profile.
+-- Users can view their own profile (no RLS recursion)
 create policy "profile_read_own" on public.user_profile for select
   using (auth.uid() = id);
--- Admins can view any profile.
-create policy "profile_read_admin" on public.user_profile for select
-  using (public.is_admin());
--- Users can update their own profile.
+
+-- Users can update their own profile (no RLS recursion)
 create policy "profile_update_own" on public.user_profile for update
   using (auth.uid() = id);
--- Admins can update any profile.
+
+-- Admins can view any profile (direct query to avoid recursion)
+create policy "profile_read_admin" on public.user_profile for select
+  using (
+    exists (
+      select 1 from public.user_profile up
+      where up.id = auth.uid() and up.role = 'admin'
+    )
+  );
+
+-- Admins can update any profile (direct query to avoid recursion)
 create policy "profile_update_admin" on public.user_profile for update
-  using (public.is_admin());
+  using (
+    exists (
+      select 1 from public.user_profile up
+      where up.id = auth.uid() and up.role = 'admin'
+    )
+  );
 
 
 -- == Policies for `restaurants` ==

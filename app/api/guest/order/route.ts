@@ -3,13 +3,14 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(req: NextRequest) {
   const form = await req.formData()
+  const restaurantId = String(form.get('restaurant_id') || '')
   const token = String(form.get('token') || '')
   const item_id = String(form.get('item_id') || '')
   const qty = Number(form.get('qty') || 1)
-  if (!token || !item_id || qty < 1) return NextResponse.redirect(req.headers.get('referer') || '/', 303)
+  if (!restaurantId || !token || !item_id || qty < 1) return NextResponse.redirect(req.headers.get('referer') || '/', 303)
 
   const supabase = supabaseAdmin()
-  const { data: table } = await supabase.from('tables').select('id, restaurant_id').eq('token', token).maybeSingle()
+  const { data: table } = await supabase.from('tables').select('id, restaurant_id').eq('token', token).eq('restaurant_id', restaurantId).maybeSingle()
   if (!table?.restaurant_id) return NextResponse.redirect(req.headers.get('referer') || '/', 303)
 
   // find or create open order

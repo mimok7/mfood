@@ -37,6 +37,8 @@ export default function MenuList({
 
   const filteredItems = selectedCategory === 'all'
     ? items
+    : selectedCategory === 'uncategorized'
+    ? items.filter(item => !item.category_id)
     : items.filter(item => item.category_id === selectedCategory)
 
   const categorizedItems = categories.map(category => ({
@@ -168,30 +170,48 @@ export default function MenuList({
   return (
     <>
       <div className="space-y-6">
-        {/* 카테고리별 메뉴 표시 */}
-        {categorizedItems.map(({ category, items }) => (
-          <div key={category.id} className="space-y-3">
-            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-              {category.name}
-              <span className="ml-2 text-sm text-gray-500">({items.length}개)</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {items.map(item => (
-                <MenuCard key={item.id} item={item} />
-              ))}
-            </div>
-          </div>
-        ))}
+        {/* 필터링된 메뉴 표시 */}
+        {selectedCategory === 'all' ? (
+          // 전체 표시 모드: 카테고리별로 그룹화
+          <>
+            {categorizedItems.map(({ category, items }) => (
+              <div key={category.id} className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                  {category.name}
+                  <span className="ml-2 text-sm text-gray-500">({items.length}개)</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {items.map(item => (
+                    <MenuCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </div>
+            ))}
 
-        {/* 카테고리 없는 메뉴 */}
-        {uncategorizedItems.length > 0 && (
+            {/* 카테고리 없는 메뉴 */}
+            {uncategorizedItems.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+                  분류되지 않은 메뉴
+                  <span className="ml-2 text-sm text-gray-500">({uncategorizedItems.length}개)</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {uncategorizedItems.map(item => (
+                    <MenuCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // 필터링 모드: 선택된 카테고리의 메뉴만 표시
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
-              분류되지 않은 메뉴
-              <span className="ml-2 text-sm text-gray-500">({uncategorizedItems.length}개)</span>
+              {selectedCategory === 'uncategorized' ? '분류되지 않은 메뉴' : categories.find(c => c.id === selectedCategory)?.name || '선택된 카테고리'}
+              <span className="ml-2 text-sm text-gray-500">({filteredItems.length}개)</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {uncategorizedItems.map(item => (
+              {filteredItems.map(item => (
                 <MenuCard key={item.id} item={item} />
               ))}
             </div>

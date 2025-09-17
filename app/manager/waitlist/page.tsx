@@ -82,6 +82,30 @@ export default async function WaitlistPage() {
         </div>
       </div>
 
+      {/* 요약 정보 - 위로 이동 */}
+      <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-yellow-600'>대기중: {waitlistItems?.filter(item => item.status === 'waiting').length || 0}</div>
+          </div>
+        </div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-green-600'>착석완료: {waitlistItems?.filter(item => item.status === 'seated').length || 0}</div>
+          </div>
+        </div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-blue-600'>예약: {waitlistItems?.filter(item => item.is_reservation).length || 0}</div>
+          </div>
+        </div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-purple-600'>총인원: {waitlistItems?.reduce((sum, item) => sum + item.party_size, 0) || 0}</div>
+          </div>
+        </div>
+      </div>
+
       {/* 상태별 웨이팅 목록 */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         {Object.entries(itemsByStatus).map(([status, items]) => (
@@ -121,41 +145,6 @@ export default async function WaitlistPage() {
         </div>
       )}
 
-      {/* 요약 정보 */}
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
-          <div className='text-center'>
-            <div className='text-3xl font-bold text-yellow-600 mb-2'>
-              {waitlistItems?.filter(item => item.status === 'waiting').length || 0}
-            </div>
-            <div className='text-sm text-gray-600'>대기 중</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
-          <div className='text-center'>
-            <div className='text-3xl font-bold text-green-600 mb-2'>
-              {waitlistItems?.filter(item => item.status === 'seated').length || 0}
-            </div>
-            <div className='text-sm text-gray-600'>착석 완료</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
-          <div className='text-center'>
-            <div className='text-3xl font-bold text-blue-600 mb-2'>
-              {waitlistItems?.filter(item => item.is_reservation).length || 0}
-            </div>
-            <div className='text-sm text-gray-600'>예약</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
-          <div className='text-center'>
-            <div className='text-3xl font-bold text-purple-600 mb-2'>
-              {waitlistItems?.reduce((sum, item) => sum + item.party_size, 0) || 0}
-            </div>
-            <div className='text-sm text-gray-600'>총 인원</div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

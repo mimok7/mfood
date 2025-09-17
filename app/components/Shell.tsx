@@ -12,7 +12,16 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     return <>{children}</>
   }
 
-  // 기본: 전역 사이드바와 헤더를 제거하고 컨텐츠만 렌더링합니다.
+  // admin/manager 영역은 화면 너비 전체 사용
+  if (isAreaLayout) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="w-full">{children}</div>
+      </div>
+    )
+  }
+
+  // 기본: 중앙 정렬 컨테이너 유지
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-screen-xl mx-auto p-0">{children}</div>

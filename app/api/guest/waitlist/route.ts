@@ -18,31 +18,24 @@ export async function POST(req: NextRequest) {
     const name = String(payload.name || '').trim()
     const phone = String(payload.phone || '').trim()
     const partySize = parseInt(String(payload.party_size || payload.partySize || '1'), 10) || 1
-    const restaurant_param = payload.restaurant || payload.restaurant_id || null
+    const restaurant_id = payload.restaurant_id || null
     const token = payload.token || null
 
     const supabase = supabaseAdmin()
 
-    // resolve restaurant_id from token if needed
-    let restaurant_id = restaurant_param
-    if (!restaurant_id && token) {
-      const { data: table } = await supabase.from('tables').select('restaurant_id').eq('token', token).maybeSingle()
-      restaurant_id = table?.restaurant_id ?? null
-    }
-
-    if (!name) {
-      if (contentType.includes('application/json')) return NextResponse.json({ error: 'name required' }, { status: 400 })
-      return NextResponse.redirect(req.headers.get('referer') || '/', 303)
-    }
-
-    if (!partySize || partySize <= 0) {
-      if (contentType.includes('application/json')) return NextResponse.json({ error: 'party_size required' }, { status: 400 })
-      return NextResponse.redirect(req.headers.get('referer') || '/', 303)
-    }
-
+    // restaurant_id 검증 (token으로 추가 검증)
     if (!restaurant_id) {
-      if (contentType.includes('application/json')) return NextResponse.json({ error: 'restaurant required' }, { status: 400 })
+      if (contentType.includes('application/json')) return NextResponse.json({ error: 'restaurant_id required' }, { status: 400 })
       return NextResponse.redirect(req.headers.get('referer') || '/', 303)
+    }
+
+    // token이 제공된 경우 restaurant_id와 일치하는지 검증
+    if (token) {
+      const { data: table } = await supabase.from('tables').select('restaurant_id').eq('token', token).eq('restaurant_id', restaurant_id).maybeSingle()
+      if (!table) {
+        if (contentType.includes('application/json')) return NextResponse.json({ error: 'invalid token for restaurant' }, { status: 400 })
+        return NextResponse.redirect(req.headers.get('referer') || '/', 303)
+      }
     }
 
     const insertPayload = {

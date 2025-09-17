@@ -17,7 +17,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
   const rid = resolvedParams?.id
   const { data: tables } = await sb.from('tables').select('id, name, token, capacity').eq('restaurant_id', rid).order('created_at')
   const { data: restaurant } = await sb.from('restaurants').select('name').eq('id', rid).maybeSingle()
-  const base = process.env.NEXT_PUBLIC_BASE_URL || ''
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
   return (
     <div className='space-y-6'>
@@ -67,7 +67,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
                     <div key={idx} className='flex flex-col items-center justify-center p-2 text-center'>
                       <div className='font-semibold mb-1'>{restaurant?.name}</div>
                       <div className='text-lg text-gray-700 mb-1'>대기 등록</div>
-                      <Qr url={`${base}/guest/waitlist?restaurant=${rid}`} size={180} className='w-44 h-44 p-1' />
+                      <Qr url={`${base}/guest/waitlist?restaurant_id=${rid}`} size={180} className='w-44 h-44 p-1' />
                       <div className='text-xs text-gray-600 mt-1'>📝 대기자 등록 후 순번 확인</div>
                     </div>
                   ))}
@@ -132,7 +132,7 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
           <div className='p-6'>
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
               {tables.map(t => {
-                const url = `${base}/guest/qr/${t.token}`
+                const url = `${base}/guest/qr/${rid}/${t.token}`
                 return (
                   <div key={t.id} className='bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-200'>
                     <div className='text-center mb-4'>
@@ -231,13 +231,13 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
                 <div className='bg-white border border-gray-200 rounded-lg p-3'>
                   <div className='text-xs text-gray-500 mb-1'>웨이팅 URL</div>
                   <div className='text-xs text-orange-600 break-all font-mono bg-orange-50 p-2 rounded'>
-                    {`${base}/guest/waitlist?restaurant=${rid}`}
+                    {`${base}/guest/waitlist?restaurant_id=${rid}`}
                   </div>
                 </div>
 
                 <div className='flex gap-2 print:hidden'>
                   <a
-                    href={`${base}/guest/waitlist?restaurant=${rid}`}
+                    href={`${base}/guest/waitlist?restaurant_id=${rid}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className='w-full bg-orange-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors text-center'

@@ -1,5 +1,6 @@
 import { requireRole } from '@/lib/auth'
 import { createSupabaseServer } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -16,15 +17,15 @@ export default async function ManagerTablesPage() {
 
   const supabase = createSupabaseServer()
 
-  // 테이블 정보 가져오기
-  const { data: tables } = await supabase
+  // 테이블 정보 가져오기 (RLS 우회를 위해 supabaseAdmin 사용)
+  const { data: tables, error: tablesError } = await supabaseAdmin()
     .from('tables')
     .select('*')
     .eq('restaurant_id', restaurant_id)
     .order('name', { ascending: true })
 
   // 현재 활성 주문들 가져오기 (테이블별 상태 확인용)
-  const { data: activeOrders } = await supabase
+  const { data: activeOrders, error: ordersError } = await supabaseAdmin()
     .from('orders')
     .select(`
       id,
@@ -92,30 +93,27 @@ export default async function ManagerTablesPage() {
       </div>
 
       {/* 테이블 통계 */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
           <div className='text-center'>
-            <div className='text-3xl font-bold text-blue-600 mb-2'>{totalTables}</div>
-            <div className='text-sm text-gray-600'>전체 테이블</div>
+            <div className='text-lg font-semibold text-blue-600'>전체테이블: {totalTables}</div>
           </div>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
           <div className='text-center'>
-            <div className='text-3xl font-bold text-green-600 mb-2'>{availableTables}</div>
-            <div className='text-sm text-gray-600'>사용 가능</div>
+            <div className='text-lg font-semibold text-green-600'>사용가능: {availableTables}</div>
           </div>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-6'>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
           <div className='text-center'>
-            <div className='text-3xl font-bold text-orange-600 mb-2'>{occupiedTables}</div>
-            <div className='text-sm text-gray-600'>사용 중</div>
+            <div className='text-lg font-semibold text-orange-600'>사용중: {occupiedTables}</div>
           </div>
         </div>
       </div>
 
       {/* 테이블 그리드 */}
       <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
-        <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
+        <div className='bg-gray-50 px-4 py-3 border-b border-gray-200'>
           <h2 className='text-xl font-semibold text-gray-900 flex items-center'>
             <span className='mr-2'>🏗️</span>
             테이블 배치도 ({tables?.length || 0}개)
@@ -124,7 +122,7 @@ export default async function ManagerTablesPage() {
         </div>
 
         {tables && tables.length > 0 ? (
-          <div className='p-6'>
+          <div className='p-4'>
             <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'>
               {tables.map((table) => {
                 const statusInfo = getTableStatus(table.id)
@@ -132,7 +130,7 @@ export default async function ManagerTablesPage() {
                 return (
                   <div
                     key={table.id}
-                    className='border-2 border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer'
+                    className='border-2 border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-colors cursor-pointer'
                   >
                     {/* 테이블 헤더 */}
                     <div className='text-center mb-3'>

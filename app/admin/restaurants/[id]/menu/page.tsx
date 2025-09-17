@@ -7,6 +7,7 @@ export default async function AdminMenuPage({ params, searchParams }: { params: 
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams
   const rid = resolvedParams.id
+  const selectedCategory = String(resolvedSearchParams.category || 'all')
 
   if (!rid) {
     return (
@@ -62,6 +63,56 @@ export default async function AdminMenuPage({ params, searchParams }: { params: 
           </div>
         </div>
       )}
+
+      {/* 카테고리 필터 탭 */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">🏷️</span>
+            <h2 className="text-lg font-semibold text-gray-900">카테고리 필터</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`/admin/restaurants/${rid}/menu`}
+              className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+              }`}
+            >
+              전체 ({items?.length || 0})
+            </a>
+            {categories?.map(category => {
+              const categoryItems = items?.filter(item => item.category_id === category.id) || []
+              return (
+                <a
+                  key={category.id}
+                  href={`/admin/restaurants/${rid}/menu?category=${category.id}`}
+                  className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === category.id
+                      ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                  }`}
+                >
+                  {category.name} ({categoryItems.length})
+                </a>
+              )
+            })}
+            {items?.some(item => !item.category_id) && (
+              <a
+                href={`/admin/restaurants/${rid}/menu?category=uncategorized`}
+                className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === 'uncategorized'
+                    ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                }`}
+              >
+                분류되지 않음 ({items?.filter(item => !item.category_id).length || 0})
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4">
@@ -128,7 +179,7 @@ export default async function AdminMenuPage({ params, searchParams }: { params: 
             </form>
           </div>
 
-          <MenuList categories={categories as any} initialItems={items as any} restaurantId={rid} />
+          <MenuList categories={categories as any} initialItems={items as any} restaurantId={rid} selectedCategory={selectedCategory} />
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { requireRole } from '@/lib/auth'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,6 +9,32 @@ export default async function ManagerPage() {
   const { restaurant_id } = await requireRole('manager')
   const supabase = createSupabaseServer()
   const { data: restaurant } = await supabase.from('restaurants').select('name').eq('id', restaurant_id).single()
+
+  // 실시간 통계 데이터 가져오기
+  const { data: pendingOrders } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact' })
+    .eq('restaurant_id', restaurant_id)
+    .eq('status', 'pending')
+
+  const { data: preparingOrders } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact' })
+    .eq('restaurant_id', restaurant_id)
+    .eq('status', 'preparing')
+
+  const { data: waitlist } = await supabase
+    .from('waitlist')
+    .select('id', { count: 'exact' })
+    .eq('restaurant_id', restaurant_id)
+    .eq('status', 'waiting')
+
+  async function signOut() {
+    'use server'
+    const supabase = createSupabaseServer()
+    await supabase.auth.signOut()
+    redirect('/auth/sign-in')
+  }
 
   return (
     <div className='space-y-6'>
@@ -21,7 +48,7 @@ export default async function ManagerPage() {
               식당: <span className='font-semibold'>{restaurant?.name ?? '알 수 없음'}</span>
             </div>
           </div>
-          <div className='ml-4'>
+          <div className='ml-4 flex space-x-2'>
             <Link
               href="/manager"
               className="inline-flex items-center px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors border border-white/30"
@@ -29,6 +56,39 @@ export default async function ManagerPage() {
               <span className="mr-2">🏠</span>
               홈
             </Link>
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="inline-flex items-center px-4 py-2 bg-red-500/20 text-white rounded-lg hover:bg-red-500/30 transition-colors border border-red-300/30"
+              >
+                <span className="mr-2">🚪</span>
+                로그아웃
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* 실시간 현황 섹션 - 위로 이동 */}
+      <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
+        <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
+          <h2 className='text-xl font-semibold text-gray-900 flex items-center'>
+            <span className='mr-2'>📈</span>
+            실시간 현황
+          </h2>
+          <p className='text-sm text-gray-600 mt-1'>현재 식당 운영 상태</p>
+        </div>
+        <div className='p-6'>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+            <div className='text-center'>
+              <div className='text-lg font-semibold text-blue-600'>주문대기: {pendingOrders?.length || 0}</div>
+            </div>
+            <div className='text-center'>
+              <div className='text-lg font-semibold text-green-600'>준비중: {preparingOrders?.length || 0}</div>
+            </div>
+            <div className='text-center'>
+              <div className='text-lg font-semibold text-orange-600'>웨이팅: {waitlist?.length || 0}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -144,32 +204,6 @@ export default async function ManagerPage() {
         </Link>
       </div>
 
-      {/* 실시간 현황 섹션 */}
-      <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
-        <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
-          <h2 className='text-xl font-semibold text-gray-900 flex items-center'>
-            <span className='mr-2'>📈</span>
-            실시간 현황
-          </h2>
-          <p className='text-sm text-gray-600 mt-1'>현재 식당 운영 상태</p>
-        </div>
-        <div className='p-6'>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-            <div className='text-center'>
-              <div className='text-3xl font-bold text-blue-600 mb-2'>--</div>
-              <div className='text-sm text-gray-600'>대기 중인 주문</div>
-            </div>
-            <div className='text-center'>
-              <div className='text-3xl font-bold text-green-600 mb-2'>--</div>
-              <div className='text-sm text-gray-600'>준비 중인 주문</div>
-            </div>
-            <div className='text-center'>
-              <div className='text-3xl font-bold text-orange-600 mb-2'>--</div>
-              <div className='text-sm text-gray-600'>웨이팅 고객</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

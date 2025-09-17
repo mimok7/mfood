@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth'
-import { createSupabaseServer } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import RestaurantSwitcher from '../RestaurantSwitcher'
 import { headers } from 'next/headers'
 
@@ -13,7 +15,7 @@ export default async function RestaurantAdminLayout({ children, params }: { chil
   await requireRole('manager', { targetRestaurantId: rid, redirectTo: '/admin' as any })
 
   // Fetch restaurant info to show name in header for all child pages
-  const sb = createSupabaseServer()
+  const sb = supabaseAdmin()
   const { data: restaurant } = await sb.from('restaurants').select('id, name, slug').eq('id', rid).maybeSingle()
   const { data: all } = await sb.from('restaurants').select('id, name, slug').order('created_at')
 

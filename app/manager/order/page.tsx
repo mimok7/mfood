@@ -87,29 +87,35 @@ export default async function ManagerOrderPage() {
 
       {/* 주문 통계 */}
       <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4'>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
-          <div className='text-2xl font-bold text-yellow-600'>{orderStats.pending || 0}</div>
-          <div className='text-sm text-gray-600'>주문 대기</div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-yellow-600'>주문대기: {orderStats.pending || 0}</div>
+          </div>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
-          <div className='text-2xl font-bold text-blue-600'>{orderStats.confirmed || 0}</div>
-          <div className='text-sm text-gray-600'>주문 확인</div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-blue-600'>주문확인: {orderStats.confirmed || 0}</div>
+          </div>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
-          <div className='text-2xl font-bold text-orange-600'>{orderStats.preparing || 0}</div>
-          <div className='text-sm text-gray-600'>준비 중</div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-orange-600'>준비중: {orderStats.preparing || 0}</div>
+          </div>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
-          <div className='text-2xl font-bold text-green-600'>{orderStats.ready || 0}</div>
-          <div className='text-sm text-gray-600'>준비 완료</div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-green-600'>준비완료: {orderStats.ready || 0}</div>
+          </div>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
-          <div className='text-2xl font-bold text-gray-600'>{orderStats.served || 0}</div>
-          <div className='text-sm text-gray-600'>서빙 완료</div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-gray-600'>서빙완료: {orderStats.served || 0}</div>
+          </div>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-4'>
-          <div className='text-2xl font-bold text-red-600'>{orderStats.cancelled || 0}</div>
-          <div className='text-sm text-gray-600'>취소됨</div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-red-600'>취소됨: {orderStats.cancelled || 0}</div>
+          </div>
         </div>
       </div>
 
