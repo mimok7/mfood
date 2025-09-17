@@ -12,7 +12,8 @@ export default async function GuestPage() {
   const urlObj = new URL(url.startsWith('http') ? url : `http://localhost${url}`)
   const token = urlObj.searchParams.get('token')
   const type = urlObj.searchParams.get('type')
-  const restaurantId = urlObj.searchParams.get('restaurant')
+  // support both 'restaurant' and 'restaurant_id' query param names
+  const restaurantId = urlObj.searchParams.get('restaurant') || urlObj.searchParams.get('restaurant_id') || urlObj.searchParams.get('rid')
 
   let menuItems: any[] = []
   let restaurantName = '레스토랑'
@@ -87,7 +88,7 @@ export default async function GuestPage() {
               </div>
             </div>
           </div>
-          <WaitingForm />
+          <WaitingForm restaurantId={restaurantId ?? undefined} wt={urlObj.searchParams.get('wt') ?? undefined} />
         </main>
       </div>
     )

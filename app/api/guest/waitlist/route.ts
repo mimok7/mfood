@@ -91,3 +91,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'server error' }, { status: 500 })
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url)
+    const restaurant_id = url.searchParams.get('restaurant_id') || url.searchParams.get('restaurant') || url.searchParams.get('rid')
+    if (!restaurant_id) return NextResponse.json({ error: 'restaurant_id required' }, { status: 400 })
+
+    const supabase = supabaseAdmin()
+    // fetch waiting list minimal fields only; do NOT return phone
+    const { data, error } = await supabase
+      .from('waitlist')
+      .select('id, created_at, party_size, name, status')
+      .eq('restaurant_id', restaurant_id)
+      .eq('status', 'waiting')
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('waitlist GET error', error)
+      return NextResponse.json({ error: 'fetch failed' }, { status: 500 })
+    }
+
+    function maskName(n?: string | null) {
+      const s = (n || '').trim()
+      if (!s) return '손님'
+      if (s.length === 1) return '*'
+      if (s.length === 2) return s[0] + '*'
+      return s[0] + '*'.repeat(Math.max(1, s.length - 2)) + s[s.length - 1]
+    }
+
+    const items = (data || []).map((row) => ({
+      id: row.id,
+      created_at: row.created_at,
+      party_size: row.party_size,
+      display_name: maskName((row as any).name),
+    }))
+
+    return NextResponse.json({ items }, { status: 200 })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: 'server error' }, { status: 500 })
+  }
+}
