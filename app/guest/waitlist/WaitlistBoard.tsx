@@ -15,6 +15,7 @@ export default function WaitlistBoard({ restaurantId }: { restaurantId: string }
   const [error, setError] = useState<string | null>(null)
 
   async function fetchList(signal?: AbortSignal) {
+    if (!restaurantId) return
     try {
       const params = new URLSearchParams({ restaurant_id: restaurantId })
       const res = await fetch(`/api/guest/waitlist?${params.toString()}`, { signal, cache: 'no-store' })

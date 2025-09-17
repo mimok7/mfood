@@ -30,6 +30,12 @@ export default function WaitingForm({ restaurantId, wt }: { restaurantId?: strin
     setLoading(true)
     setMessage(null)
 
+    if (!restaurantId) {
+      setMessage('레스토랑 정보가 없습니다. 올바른 URL로 접속해 주세요.')
+      setLoading(false)
+      return
+    }
+
     try {
       // prefer JSON body so the API returns JSON with position
       const payload: any = { name, phone, party_size: partySize }
@@ -101,6 +107,11 @@ export default function WaitingForm({ restaurantId, wt }: { restaurantId?: strin
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+      {!restaurantId && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+          ⚠️ 레스토랑 정보가 확인되지 않습니다. 올바른 URL로 접속해 주세요.
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-3">
         <label className="text-sm text-gray-700">이름
           <input value={name} onChange={e => setName(e.target.value)} required className="w-full border rounded px-3 py-2 mt-1" />
@@ -112,7 +123,7 @@ export default function WaitingForm({ restaurantId, wt }: { restaurantId?: strin
         <label className="text-sm text-gray-700">인원수
           <input type="number" value={partySize} onChange={e => setPartySize(Number(e.target.value))} min={1} className="w-full border rounded px-3 py-2 mt-1" />
         </label>
-        <button type="submit" disabled={loading} className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+        <button type="submit" disabled={loading || !restaurantId} className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
           {loading ? '등록 중…' : '대기 등록'}
         </button>
         {message && <div className="text-sm text-gray-700 mt-2">{message}</div>}

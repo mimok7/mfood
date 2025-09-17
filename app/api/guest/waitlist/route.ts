@@ -96,7 +96,10 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url)
     const restaurant_id = url.searchParams.get('restaurant_id') || url.searchParams.get('restaurant') || url.searchParams.get('rid')
-    if (!restaurant_id) return NextResponse.json({ error: 'restaurant_id required' }, { status: 400 })
+    if (!restaurant_id) {
+      // During initial hydration or dev hot-reload, allow empty list instead of 400.
+      return NextResponse.json({ items: [] }, { status: 200 })
+    }
 
     const supabase = supabaseAdmin()
     // fetch waiting list minimal fields only; do NOT return phone
