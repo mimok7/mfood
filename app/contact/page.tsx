@@ -355,7 +355,7 @@ export default function ContactPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Link href="/docs/user-guide.md" className="block p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+            <Link href="/support/user-guide" className="block p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -365,7 +365,7 @@ export default function ContactPage() {
               <p className="text-gray-600">역할별 상세한 사용법과 기능 설명을 확인하세요</p>
             </Link>
 
-            <Link href="/docs/quick-start.md" className="block p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+            <Link href="/support/quick-start" className="block p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -375,7 +375,7 @@ export default function ContactPage() {
               <p className="text-gray-600">5분 만에 mfood 시스템 사용을 시작하는 방법</p>
             </Link>
 
-            <Link href="/docs/admin-guide.md" className="block p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+            <Link href="/support/admin-guide" className="block p-6 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -415,9 +415,9 @@ export default function ContactPage() {
             <div>
               <h4 className="text-lg font-semibold mb-4">지원</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/docs/user-guide.md" className="hover:text-white transition-colors">사용자 가이드</Link></li>
-                <li><Link href="/docs/quick-start.md" className="hover:text-white transition-colors">빠른 시작</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition-colors">기술 지원</Link></li>
+                <li><Link href="/support/user-guide" className="hover:text-white transition-colors">사용자 가이드</Link></li>
+                <li><Link href="/support/quick-start" className="hover:text-white transition-colors">빠른 시작</Link></li>
+                <li><Link href="/support/technical" className="hover:text-white transition-colors">기술 지원</Link></li>
                 <li><Link href="/contact" className="hover:text-white transition-colors">문의하기</Link></li>
               </ul>
             </div>

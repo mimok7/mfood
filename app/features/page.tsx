@@ -461,10 +461,10 @@ export default function FeaturesPage() {
             <div>
               <h4 className="text-lg font-semibold mb-4">지원</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/docs/user-guide.md" className="hover:text-white transition-colors">사용자 가이드</Link></li>
-                <li><Link href="/docs/quick-start.md" className="hover:text-white transition-colors">빠른 시작</Link></li>
-                <li><Link href="/docs/admin-guide.md" className="hover:text-white transition-colors">관리자 가이드</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition-colors">기술 지원</Link></li>
+                <li><Link href="/support/user-guide" className="hover:text-white transition-colors">사용자 가이드</Link></li>
+                <li><Link href="/support/quick-start" className="hover:text-white transition-colors">빠른 시작</Link></li>
+                <li><Link href="/support/admin-guide" className="hover:text-white transition-colors">관리자 가이드</Link></li>
+                <li><Link href="/support/technical" className="hover:text-white transition-colors">기술 지원</Link></li>
               </ul>
             </div>
             
