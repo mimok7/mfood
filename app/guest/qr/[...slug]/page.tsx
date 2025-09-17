@@ -1,65 +1,109 @@
-import { supabaseAdmin } from '@/lib/supabase-admin'
-type MenuItem = { id: string; name: string; price: number }
+// @ts-nocheck
+import { getOrCreateOpenOrder } from '@/app/order/actions'
+import CartClientScript from '@/components/CartClientScript'
+import ClientCart from '@/components/ClientCart'
+import { createSupabaseServer } from '@/lib/supabase-server'
+import ClientOrderPanel from '@/components/ClientOrderPanel'
+import type { Metadata } from 'next'
 
-async function fetchMenu(restaurantId: string, token: string): Promise<MenuItem[]> {
-  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-  const res = await fetch(`${base}/api/guest/menu?restaurant_id=${encodeURIComponent(restaurantId)}&token=${encodeURIComponent(token)}`, { cache: 'no-store' })
-  if (!res.ok) return []
-  return res.json()
-}
+export const dynamic = 'force-dynamic'
 
-export default async function GuestQrPage({ params }: { params?: Promise<{ slug: string[] }> }) {
+export async function generateMetadata({ params }: any): Promise<Metadata> {
   const resolvedParams = params ? await params : undefined
   const slug = resolvedParams?.slug || []
   const restaurantId = slug[0] || ''
   const token = slug[1] || ''
-
-  const items = await fetchMenu(restaurantId, token)
-  // fetch restaurant name from DB via supabaseAdmin
-  let restaurantName = ''
-  try {
-    const sb = supabaseAdmin()
-    const { data: r } = await sb.from('restaurants').select('name').eq('id', restaurantId).maybeSingle()
-    restaurantName = r?.name ?? ''
-  } catch (e) {
-    restaurantName = ''
+  
+  return {
+    title: `Welcome Food - 테이블 ${token}`,
+    description: '맛있는 음식을 주문하세요',
   }
-  const safeRestaurantName = restaurantName || (restaurantId ? `식당 ${restaurantId.slice(0,8)}` : '메뉴')
+}
+
+export default async function OrderQrPage({ params }: any) {
+  const resolvedParams = params ? await params : undefined
+  const slug = resolvedParams?.slug || []
+  const restaurantId = slug[0] || ''
+  const token = slug[1] || ''
+  
+  const supabase = createSupabaseServer()
+
+  // Find table by token and restaurant_id
+  const { data: table } = await supabase
+    .from('tables')
+    .select('id,name,restaurant_id')
+    .eq('token', token)
+    .eq('restaurant_id', restaurantId)
+    .maybeSingle()
+
+  const tableId = table?.id || token // fallback to token if table not found
+  const tableLabel = table?.name ?? `테이블 ${token}`
+  const isValidTable = !!table
+
+  let restaurantName = 'Restaurant'
+  try {
+    const { data: rs } = await supabase
+      .from('restaurants')
+      .select('name')
+      .eq('id', restaurantId)
+      .maybeSingle()
+    restaurantName = rs?.name ?? restaurantName
+  } catch (e) {}
+
+  const { data: items = [] } = await supabase
+    .from('menu_items')
+    .select('id,name,price,category_id,is_active')
+    .eq('restaurant_id', restaurantId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+
+  const { data: categories = [] } = await supabase
+    .from('menu_categories')
+    .select('id,name')
+    .eq('restaurant_id', restaurantId)
+    .order('position', { ascending: true })
+
+  // Only try to create order if we have a valid table
+  if (isValidTable) {
+    await getOrCreateOpenOrder(tableId, 'qr')
+  }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-  <h1 className="text-2xl font-bold mb-1">{safeRestaurantName}</h1>
-      <ul className="divide-y divide-gray-200 bg-white rounded shadow">
-        {items.map((it) => (
-          <li key={it.id} className="p-4 flex items-center justify-between">
-            <div>
-              <div className="font-medium">{it.name}</div>
-              <div className="text-sm text-gray-500">{it.price.toLocaleString()}원</div>
-            </div>
-            <form action={`/api/guest/order`} method="post" className="flex items-center gap-2">
-              <div className="absolute -left-[9999px]">
-                <span>{/* hidden container for accessibility */}</span>
-              </div>
-              <input type="hidden" name="restaurant_id" value={restaurantId} />
-              <input type="hidden" name="token" value={token} />
-              <input type="hidden" name="item_id" value={it.id} />
-              <input type="number" name="qty" min={1} defaultValue={1} className="w-16 border rounded px-2 py-1" />
-              <button className="px-3 py-1 rounded bg-blue-600 text-white">주문</button>
-            </form>
-          </li>
-        ))}
-      </ul>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-screen-sm mx-auto px-4 py-4">
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-bold text-gray-900">{restaurantName} ({tableLabel})</h1>
+            <p className="text-base text-gray-600">메뉴를 선택하고 주문해보세요</p>
+          </div>
+        </div>
+      </div>
 
-  <h2 className="text-xl font-semibold mt-8 mb-2">웨이팅 등록</h2>
-  <div className="text-sm text-gray-500 mb-2">식당: {safeRestaurantName}</div>
-      <form action="/api/guest/waitlist" method="post" className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white p-4 rounded shadow">
-        <input type="hidden" name="restaurant_id" value={restaurantId} />
-        <input type="hidden" name="token" value={token} />
-        <input name="name" placeholder="이름" className="border rounded px-3 py-2" required />
-        <input name="phone" placeholder="연락처" className="border rounded px-3 py-2" />
-        <input name="party_size" type="number" min={1} defaultValue={2} className="border rounded px-3 py-2" />
-        <button className="px-3 py-2 rounded bg-green-600 text-white">대기 등록</button>
-      </form>
+      <div className="max-w-screen-sm mx-auto px-4 pb-32">
+        <ClientOrderPanel tableId={tableId} items={items} categories={categories} />
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        <div className="max-w-screen-sm mx-auto p-4">
+          <form data-cart-form="true" data-table-id={tableId} className="space-y-4">
+            <div className="hidden">
+              <ClientCart initialItems={[]} tableId={tableId} />
+            </div>
+            <input type="hidden" name="cart" value="[]" />
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                data-action="toggle-order-history"
+                className="flex-1 py-4 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl shadow-lg transition-all duration-200 active:scale-95 text-base border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                📋 주문내역
+              </button>
+            </div>
+          </form>
+          <CartClientScript />
+        </div>
+      </div>
     </div>
   )
 }

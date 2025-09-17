@@ -1,6 +1,6 @@
+// Manager orders page
 import { requireRole } from '@/lib/auth'
 import { createSupabaseServer } from '@/lib/supabase-server'
-import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,24 +17,23 @@ export default async function ManagerOrderPage() {
   const supabase = createSupabaseServer()
 
   // 현재 진행 중인 주문들 가져오기 (최근 24시간)
-  const { data: orders } = await supabase
+  const { data: orders, error } = await supabase
     .from('orders')
     .select(`
       id,
       table_id,
       status,
-      total_amount,
       created_at,
       updated_at,
-      tables (
+      tables!inner (
         id,
         name
       ),
       order_items (
         id,
-        quantity,
+        qty,
         price,
-        notes,
+        note,
         menu_items (
           id,
           name,
@@ -42,201 +41,133 @@ export default async function ManagerOrderPage() {
         )
       )
     `)
-    .eq('restaurant_id', restaurant_id)
+    .eq('tables.restaurant_id', restaurant_id)
     .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
     .order('created_at', { ascending: false })
 
-  // 주문 상태별 카운트
-  const orderStats = (orders ?? []).reduce((acc, order) => {
-    acc[order.status] = (acc[order.status] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  if (error) {
+    console.error('주문 조회 오류:', error)
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">주문 관리</h1>
+        <p className="text-red-600">주문을 불러오는 중 오류가 발생했습니다.</p>
+      </div>
+    )
+  }
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
-      case 'pending': return { text: '주문 대기', color: 'bg-yellow-100 text-yellow-800' }
-      case 'confirmed': return { text: '주문 확인', color: 'bg-blue-100 text-blue-800' }
-      case 'preparing': return { text: '준비 중', color: 'bg-orange-100 text-orange-800' }
-      case 'ready': return { text: '준비 완료', color: 'bg-green-100 text-green-800' }
-      case 'served': return { text: '서빙 완료', color: 'bg-gray-100 text-gray-800' }
-      case 'cancelled': return { text: '취소됨', color: 'bg-red-100 text-red-800' }
-      default: return { text: '알 수 없음', color: 'bg-gray-100 text-gray-800' }
+      case 'open':
+        return { text: '주문 대기', color: 'bg-yellow-100 text-yellow-800' }
+      case 'sent':
+        return { text: '주문 확인', color: 'bg-blue-100 text-blue-800' }
+      case 'served':
+        return { text: '서빙 완료', color: 'bg-green-100 text-green-800' }
+      case 'cancelled':
+        return { text: '취소됨', color: 'bg-red-100 text-red-800' }
+      default:
+        return { text: status, color: 'bg-gray-100 text-gray-800' }
     }
   }
 
   return (
-    <div className='space-y-6'>
-      {/* 헤더 섹션 */}
-      <div className='bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-lg shadow-lg'>
-        <div className='flex items-start justify-between'>
-          <div className='flex-1'>
-            <h1 className='text-3xl font-bold mb-2'>📋 주문 관리</h1>
-            <p className='text-blue-100'>실시간 주문 확인 및 처리</p>
-          </div>
-          <div className='ml-4'>
-            <Link
-              href="/manager"
-              className="inline-flex items-center px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors border border-white/30"
-            >
-              <span className="mr-2">🏠</span>
-              홈
-            </Link>
-          </div>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">주문 관리</h1>
+        <div className="text-sm text-gray-600">
+          최근 24시간 주문 현황
         </div>
       </div>
 
-      {/* 주문 통계 */}
-      <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4'>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-yellow-600'>주문대기: {orderStats.pending || 0}</div>
-          </div>
+      {orders && orders.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">현재 진행 중인 주문이 없습니다.</p>
         </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-blue-600'>주문확인: {orderStats.confirmed || 0}</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-orange-600'>준비중: {orderStats.preparing || 0}</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-green-600'>준비완료: {orderStats.ready || 0}</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-gray-600'>서빙완료: {orderStats.served || 0}</div>
-          </div>
-        </div>
-        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
-          <div className='text-center'>
-            <div className='text-lg font-semibold text-red-600'>취소됨: {orderStats.cancelled || 0}</div>
-          </div>
-        </div>
-      </div>
+      ) : (
+        <div className="space-y-4">
+          {orders?.map((order) => {
+            const status = getStatusDisplay(order.status)
+            const totalItems = order.order_items?.reduce((sum: number, item: any) => sum + item.qty, 0) || 0
+            const totalAmount = order.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.qty), 0) || 0
 
-      {/* 주문 목록 */}
-      <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
-        <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
-          <h2 className='text-xl font-semibold text-gray-900 flex items-center'>
-            <span className='mr-2'>📋</span>
-            최근 주문 목록 ({orders?.length || 0}건)
-          </h2>
-          <p className='text-sm text-gray-600 mt-1'>최근 24시간 내 주문들</p>
-        </div>
-
-        {orders && orders.length > 0 ? (
-          <div className='divide-y divide-gray-200'>
-            {orders.map((order) => {
-              const statusInfo = getStatusDisplay(order.status)
-              const totalItems = order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0
-
-              return (
-                <div key={order.id} className='p-6 hover:bg-gray-50 transition-colors'>
-                  <div className='flex items-center justify-between mb-4'>
-                    <div className='flex items-center space-x-4'>
-                      <div className='text-lg font-semibold text-gray-900'>
-                        주문 #{order.id.slice(0, 8)}
-                      </div>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
-                        {statusInfo.text}
+            return (
+              <div key={order.id} className="bg-white rounded-lg border shadow-sm p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold">
+                        테이블 {order.tables?.[0]?.name || '알 수 없음'}
+                      </h3>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
+                        {status.text}
                       </span>
-                      <div className='text-sm text-gray-600'>
-                        🪑 {(order.tables as any)?.name || '테이블 정보 없음'}
-                      </div>
                     </div>
-                    <div className='text-right'>
-                      <div className='text-lg font-bold text-gray-900'>
-                        {order.total_amount?.toLocaleString()}원
-                      </div>
-                      <div className='text-sm text-gray-500'>
-                        {new Date(order.created_at).toLocaleString('ko-KR')}
-                      </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      주문 시간: {new Date(order.created_at).toLocaleString('ko-KR')}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      아이템 {totalItems}개
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-600">
+                      {totalAmount.toLocaleString()}원
                     </div>
                   </div>
+                </div>
 
-                  {/* 주문 아이템들 */}
-                  <div className='space-y-2 mb-4'>
-                    {order.order_items?.map((item) => (
-                      <div key={item.id} className='flex items-center justify-between bg-gray-50 rounded-lg p-3'>
-                        <div className='flex items-center space-x-3'>
-                          <span className='text-sm font-medium text-gray-900'>
-                            {(item.menu_items as any)?.name || '메뉴 정보 없음'}
-                          </span>
-                          <span className='text-sm text-gray-600'>
-                            × {item.quantity}
-                          </span>
-                          {item.notes && (
-                            <span className='text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded'>
-                              요청사항: {item.notes}
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">주문 항목</h4>
+                  <div className="space-y-2">
+                    {order.order_items?.map((item: any) => (
+                      <div key={item.id} className="flex justify-between items-start bg-gray-50 p-3 rounded">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">
+                              {item.menu_items?.[0]?.name || '메뉴 정보 없음'}
                             </span>
+                            <span className="text-gray-600 text-sm">
+                              × {item.qty}
+                            </span>
+                          </div>
+                          {item.note && (
+                            <div className="text-sm text-gray-600 mt-1">
+                              요청사항: {item.note}
+                            </div>
                           )}
                         </div>
-                        <div className='text-sm font-medium text-gray-900'>
-                          {(item.price * item.quantity).toLocaleString()}원
+                        <div className="text-right">
+                          <span className="font-medium">
+                            {(item.price * item.qty).toLocaleString()}원
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
+                </div>
 
-                  {/* 액션 버튼들 */}
-                  <div className='flex items-center justify-between'>
-                    <div className='text-sm text-gray-600'>
-                      총 {totalItems}개 메뉴
-                    </div>
-                    <div className='flex space-x-2'>
-                      {order.status === 'pending' && (
-                        <button className='inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors'>
-                          주문 확인
-                        </button>
-                      )}
-                      {order.status === 'confirmed' && (
-                        <button className='inline-flex items-center px-3 py-2 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 transition-colors'>
-                          준비 시작
-                        </button>
-                      )}
-                      {order.status === 'preparing' && (
-                        <button className='inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors'>
-                          준비 완료
-                        </button>
-                      )}
-                      {order.status === 'ready' && (
-                        <button className='inline-flex items-center px-3 py-2 bg-purple-600 text-white text-sm rounded-md hover:bg-purple-700 transition-colors'>
-                          서빙 완료
-                        </button>
-                      )}
-                      <Link
-                        href={`/manager/order/${order.id}` as any}
-                        className='inline-flex items-center px-3 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition-colors'
-                      >
-                        상세보기
-                      </Link>
-                    </div>
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex gap-2">
+                    {order.status === 'open' && (
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        주문 확인
+                      </button>
+                    )}
+                    {order.status === 'sent' && (
+                      <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        서빙 완료
+                      </button>
+                    )}
+                    <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                      주문 취소
+                    </button>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div className='p-12 text-center'>
-            <div className='text-6xl mb-4'>📋</div>
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>주문이 없습니다</h3>
-            <p className='text-gray-500 mb-4'>최근 24시간 내에 들어온 주문이 없습니다.</p>
-            <Link
-              href={`/manager/tables` as any}
-              className='inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-            >
-              <span className='mr-2'>🪑</span>
-              테이블 관리
-            </Link>
-          </div>
-        )}
-      </div>
-
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
