@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 const WaitlistBoard = dynamic(() => import('./WaitlistBoard'), { ssr: false })
 
 export default function WaitingForm({ restaurantId, wt }: { restaurantId?: string; wt?: string } ) {
+  console.log('WaitingForm restaurantId:', restaurantId, 'wt:', wt)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [partySize, setPartySize] = useState(2)
@@ -17,6 +18,7 @@ export default function WaitingForm({ restaurantId, wt }: { restaurantId?: strin
   const [position, setPosition] = useState<number | null>(null)
   const [showToast, setShowToast] = useState(false)
   const [showBoard, setShowBoard] = useState(false)
+  const [successName, setSuccessName] = useState('')
 
   // auto-hide toast after shown
   useEffect(() => {
@@ -58,6 +60,7 @@ export default function WaitingForm({ restaurantId, wt }: { restaurantId?: strin
           // show modal with ticket info when available
           setPosition(pos)
           setTicketId(id)
+          setSuccessName(name) // save name for success message
           setModalOpen(true)
           setShowToast(true)
           // reset form and switch to board view
@@ -94,6 +97,9 @@ export default function WaitingForm({ restaurantId, wt }: { restaurantId?: strin
           <div className="font-semibold">대기 신청이 완료되었습니다.</div>
           {position ? (
             <div className="text-sm text-green-100 mt-1">현재 대기번호: {position}</div>
+          ) : null}
+          {successName ? (
+            <div className="text-sm text-green-100 mt-1">대기자: {successName}</div>
           ) : null}
           {/* 직원 확인용: 티켓 코드를 잠깐 강조 표시 */}
           {ticketId ? (
@@ -142,7 +148,9 @@ export default function WaitingForm({ restaurantId, wt }: { restaurantId?: strin
             <div className="bg-white rounded-lg shadow-lg p-6 z-50 max-w-lg mx-4" aria-live="polite">
               <h2 className="text-lg font-semibold">대기 등록이 완료되었습니다</h2>
               <p className="mt-2 text-sm text-gray-700">{position ? `대기번호: ${position}` : '대기번호 정보가 없습니다'}</p>
-              {/* 고객 화면에서 티켓 ID는 장시간 표시하지 않습니다 (개인정보 보호) */}
+              {successName ? (
+                <p className="mt-1 text-sm text-gray-700">대기자: {successName}</p>
+              ) : null}
 
               <div className="mt-4 flex gap-2">
                 <button

@@ -113,24 +113,6 @@ export default async function ManagerPage() {
           </div>
         </Link>
 
-        {/* 테이블 */}
-        <Link
-          href={`/manager/tables`}
-          className='block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden'
-        >
-          <div className='bg-gradient-to-r from-purple-500 to-pink-500 p-4'>
-            <div className='text-white text-2xl'>🪑</div>
-          </div>
-          <div className='p-4'>
-            <h3 className='text-lg font-semibold text-gray-900 mb-2 group-hover:text-green-700 transition-colors'>
-              테이블
-            </h3>
-            <p className='text-sm text-gray-600'>
-              테이블 배치도 및 상태 관리
-            </p>
-          </div>
-        </Link>
-
         {/* 키친 */}
         <Link
           href={`/manager/kitchen`}
@@ -155,7 +137,7 @@ export default async function ManagerPage() {
           className='block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden'
         >
           <div className='bg-gradient-to-r from-teal-500 to-cyan-500 p-4'>
-            <div className='text-white text-2xl'>🍽️</div>
+            <div className='text-white text-2xl'>�️</div>
           </div>
           <div className='p-4'>
             <h3 className='text-lg font-semibold text-gray-900 mb-2 group-hover:text-green-700 transition-colors'>
@@ -181,6 +163,24 @@ export default async function ManagerPage() {
             </h3>
             <p className='text-sm text-gray-600'>
               대기 고객 관리 및 호출 시스템
+            </p>
+          </div>
+        </Link>
+
+        {/* 계산 */}
+        <Link
+          href={`/manager/billing`}
+          className='block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden'
+        >
+          <div className='bg-gradient-to-r from-red-500 to-pink-500 p-4'>
+            <div className='text-white text-2xl'>💳</div>
+          </div>
+          <div className='p-4'>
+            <h3 className='text-lg font-semibold text-gray-900 mb-2 group-hover:text-green-700 transition-colors'>
+              계산
+            </h3>
+            <p className='text-sm text-gray-600'>
+              결제 처리 및 계산서 관리
             </p>
           </div>
         </Link>

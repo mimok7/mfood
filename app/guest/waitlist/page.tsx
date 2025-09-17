@@ -1,19 +1,17 @@
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { headers } from 'next/headers'
 import WaitingForm from './WaitingForm'
 
 export const dynamic = 'force-dynamic'
 
-export default async function GuestPage() {
+export default async function GuestPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   // URL에서 파라미터 확인
-  const headersList = await headers()
-  const url = headersList.get('x-url') || ''
-  const urlObj = new URL(url.startsWith('http') ? url : `http://localhost${url}`)
-  const token = urlObj.searchParams.get('token')
-  const type = urlObj.searchParams.get('type')
+  const params = await searchParams
+  const token = params.token as string
+  const type = params.type as string
   // support both 'restaurant' and 'restaurant_id' query param names
-  const restaurantId = urlObj.searchParams.get('restaurant') || urlObj.searchParams.get('restaurant_id') || urlObj.searchParams.get('rid')
+  const restaurantId = (params.restaurant as string) || (params.restaurant_id as string) || (params.rid as string)
+  console.log('page.tsx restaurantId:', restaurantId, 'params:', params)
 
   let menuItems: any[] = []
   let restaurantName = '레스토랑'
@@ -88,7 +86,7 @@ export default async function GuestPage() {
               </div>
             </div>
           </div>
-          <WaitingForm restaurantId={restaurantId ?? undefined} wt={urlObj.searchParams.get('wt') ?? undefined} />
+          <WaitingForm restaurantId={restaurantId ?? undefined} wt={(params.wt as string) ?? undefined} />
         </main>
       </div>
     )

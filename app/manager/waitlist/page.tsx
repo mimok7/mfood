@@ -10,29 +10,30 @@ export default async function WaitlistPage() {
   // 웨이팅 리스트에서 현재 활성 상태인 항목들 가져오기
   const { data: waitlistItemsRaw } = await supabase
     .from('waitlist')
-    .select('*')
+    .select(`
+      *,
+      tables(name)
+    `)
     .eq('restaurant_id', restaurant_id)
-    .in('status', ['waiting', 'seated'])
+    .in('status', ['waiting', 'called', 'seated'])
     .order('created_at', { ascending: true })
 
+  // 빈 테이블 목록 가져오기
+  const { data: tablesData } = await supabase
+    .from('tables')
+    .select('id, name, capacity')
+    .eq('restaurant_id', restaurant_id)
+    .order('name', { ascending: true })
+
+  const tables = (tablesData ?? []) as any[]
+
   const waitlistItems = (waitlistItemsRaw ?? []) as import('@/lib/types').WaitlistRow[]
-
-  // 상태별로 그룹화
-  const itemsArray = (waitlistItems ?? []) as any[]
-
-  const itemsByStatus = itemsArray.reduce((acc: Record<string, any[]>, item: any) => {
-    const status = item.status
-    if (!acc[status]) {
-      acc[status] = []
-    }
-    acc[status].push(item)
-    return acc
-  }, {} as Record<string, any[]>)
 
   const getStatusDisplay = (status: string) => {
     switch (status) {
       case 'waiting': return { text: '대기중', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' }
-      case 'seated': return { text: '착석완료', color: 'bg-green-100 text-green-800', icon: '✅' }
+      case 'called': return { text: '호출됨', color: 'bg-blue-100 text-blue-800', icon: '📢' }
+      case 'seated': return { text: '배정', color: 'bg-green-100 text-green-800', icon: '✅' }
       default: return { text: status, color: 'bg-gray-100 text-gray-800', icon: '❓' }
     }
   }
@@ -83,7 +84,7 @@ export default async function WaitlistPage() {
       </div>
 
       {/* 요약 정보 - 위로 이동 */}
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+      <div className='grid grid-cols-1 md:grid-cols-5 gap-4'>
         <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
           <div className='text-center'>
             <div className='text-lg font-semibold text-yellow-600'>대기중: {waitlistItems?.filter(item => item.status === 'waiting').length || 0}</div>
@@ -91,51 +92,33 @@ export default async function WaitlistPage() {
         </div>
         <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
           <div className='text-center'>
-            <div className='text-lg font-semibold text-green-600'>착석완료: {waitlistItems?.filter(item => item.status === 'seated').length || 0}</div>
+            <div className='text-lg font-semibold text-blue-600'>호출됨: {waitlistItems?.filter(item => item.status === 'called').length || 0}</div>
           </div>
         </div>
         <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
           <div className='text-center'>
-            <div className='text-lg font-semibold text-blue-600'>예약: {waitlistItems?.filter(item => item.is_reservation).length || 0}</div>
+            <div className='text-lg font-semibold text-green-600'>배정: {waitlistItems?.filter(item => item.status === 'seated').length || 0}</div>
           </div>
         </div>
         <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
           <div className='text-center'>
-            <div className='text-lg font-semibold text-purple-600'>총인원: {waitlistItems?.reduce((sum, item) => sum + item.party_size, 0) || 0}</div>
+            <div className='text-lg font-semibold text-purple-600'>예약: {waitlistItems?.filter(item => item.is_reservation).length || 0}</div>
+          </div>
+        </div>
+        <div className='bg-white border border-gray-200 rounded-lg shadow-sm p-3'>
+          <div className='text-center'>
+            <div className='text-lg font-semibold text-indigo-600'>총인원: {waitlistItems?.reduce((sum, item) => sum + item.party_size, 0) || 0}</div>
           </div>
         </div>
       </div>
 
       {/* 상태별 웨이팅 목록 */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        {Object.entries(itemsByStatus).map(([status, items]) => (
-          <div key={status} className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
-            <div className='bg-gray-50 px-6 py-4 border-b border-gray-200'>
-              <h2 className='text-xl font-semibold text-gray-900 flex items-center justify-between'>
-                <span className='flex items-center space-x-2'>
-                  <span>{getStatusDisplay(status).icon}</span>
-                  <span>{getStatusDisplay(status).text}</span>
-                </span>
-                <span className='text-sm text-gray-500'>({items.length}명)</span>
-              </h2>
-            </div>
-
-            <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
-              {items.length > 0 ? (
-                <WaitlistClient initialItems={items} />
-              ) : (
-                <div className='text-center py-8 text-gray-500'>
-                  <div className='text-4xl mb-2'>{getStatusDisplay(status).icon}</div>
-                  <p>{status === 'waiting' ? '대기 중인 손님이 없습니다' : '착석한 손님이 없습니다'}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className='grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6'>
+        <WaitlistClient initialItems={waitlistItems} tables={tables} />
       </div>
 
       {/* 웨이팅이 없을 때 */}
-      {Object.keys(itemsByStatus).length === 0 && (
+      {waitlistItems.length === 0 && (
         <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
           <div className='p-12 text-center'>
             <div className='text-6xl mb-4'>👥</div>
