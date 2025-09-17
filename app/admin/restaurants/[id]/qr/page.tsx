@@ -168,10 +168,17 @@ export default async function RestaurantQrPage({ params }: { params?: Promise<{ 
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className='w-full bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center'
+                          className='flex-1 bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center'
                         >
                           🔗 테스트
                         </a>
+
+                        <form method="post" action={`/api/admin/restaurants/${rid}/qr/regenerate`} className=''>
+                          <input type="hidden" name="table_id" value={t.id} />
+                          <button type="submit" className='bg-red-600 text-white text-sm font-medium py-2 px-4 rounded-lg hover:bg-red-700 transition-colors'>
+                            🔄 새 생성
+                          </button>
+                        </form>
                       </div>
                     </div>
                   </div>

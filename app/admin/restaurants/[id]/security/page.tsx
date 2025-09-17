@@ -144,9 +144,12 @@ export default async function SecurityPage({ params }: { params?: Promise<{ id: 
                   <div className='text-xs bg-gray-200 px-2 py-1 rounded font-mono'>
                     {table.token?.substring(0, 8)}...
                   </div>
-                  <button className='bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors'>
-                    🔄 재생성
-                  </button>
+                  <form method="post" action={`/api/admin/restaurants/${rid}/qr/regenerate`}>
+                    <input type="hidden" name="table_id" value={table.id} />
+                    <button type="submit" className='bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors'>
+                      🔄 재생성
+                    </button>
+                  </form>
                 </div>
               </div>
             ))}
