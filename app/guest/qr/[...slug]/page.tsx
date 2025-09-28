@@ -28,16 +28,26 @@ export default async function OrderQrPage({ params }: any) {
   const token = slug[1] || ''
   
   // 디버깅 정보
-  console.log('QR Access Debug:', { restaurantId, token, slug, fullSlug: resolvedParams?.slug })
+  console.log('QR Access Debug:', { 
+    restaurantId, 
+    token, 
+    slug, 
+    fullSlug: resolvedParams?.slug,
+    rawParams: params,
+    resolvedParams 
+  })
   
   const supabase = createSupabaseServer()
 
   // 레스토랑 존재 여부 먼저 확인
-  const { data: restaurant } = await supabase
+  const { data: restaurant, error: restaurantError } = await supabase
     .from('restaurants')
     .select('id, name, slug')
     .eq('id', restaurantId)
     .maybeSingle()
+  
+  // 디버깅: 레스토랑 조회 결과 로그
+  console.log('Restaurant Query:', { restaurantId, restaurant, restaurantError })
 
   if (!restaurant) {
     return (
@@ -46,10 +56,17 @@ export default async function OrderQrPage({ params }: any) {
           <div className="text-6xl mb-4">🏪</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">레스토랑을 찾을 수 없습니다</h1>
           <p className="text-gray-600 mb-4">요청하신 레스토랑 정보가 존재하지 않습니다.</p>
-          <div className="text-sm text-gray-400 space-y-1">
-            <p>Restaurant ID: {restaurantId}</p>
-            <p>Token: {token}</p>
-            <p>Full URL: /guest/qr/{slug.join('/')}</p>
+          <div className="text-sm text-gray-400 space-y-1 bg-red-50 p-3 rounded">
+            <p><strong>Debug Info:</strong></p>
+            <p>Restaurant ID: <code>{restaurantId}</code></p>
+            <p>Token: <code>{token}</code></p>
+            <p>Full URL: <code>/guest/qr/{slug.join('/')}</code></p>
+            <p>Slug Array: <code>[{slug.map(s => `"${s}"`).join(', ')}]</code></p>
+            <p>Expected: efb8dcee-fec0-41a0-9056-bddba237b2f7</p>
+            <details className="mt-2">
+              <summary className="cursor-pointer text-blue-600">Raw Data</summary>
+              <pre className="text-xs mt-1 overflow-auto">{JSON.stringify({ resolvedParams, slug }, null, 2)}</pre>
+            </details>
           </div>
         </div>
       </div>
@@ -57,12 +74,15 @@ export default async function OrderQrPage({ params }: any) {
   }
 
   // 테이블 토큰으로 테이블 찾기
-  const { data: table } = await supabase
+  const { data: table, error: tableError } = await supabase
     .from('tables')
     .select('id, name, restaurant_id, token')
     .eq('token', token)
     .eq('restaurant_id', restaurantId)
     .maybeSingle()
+  
+  // 디버깅: 테이블 조회 결과 로그
+  console.log('Table Query:', { token, restaurantId, table, tableError })
 
   const isValidTable = !!table
   const tableId = isValidTable ? table.id : token
