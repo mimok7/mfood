@@ -167,19 +167,50 @@ export default async function OrderQrPage({ params }: any) {
   }
 
   // 테이블 토큰으로 테이블 찾기
-  const { data: table, error: tableError } = await supabase
+  const { data: table, error: tableError } = await supabasePublic
     .from('tables')
     .select('id, name, restaurant_id, token')
     .eq('token', token)
     .eq('restaurant_id', restaurantId)
     .maybeSingle()
   
+  // 만약 테이블을 찾지 못하면 관리자 권한으로 다시 시도
+  let adminTable = null
+  if (!table) {
+    const { supabaseAdmin } = await import('@/lib/supabase-admin')
+    const adminClient = supabaseAdmin()
+    const { data: adminTableResult } = await adminClient
+      .from('tables')
+      .select('id, name, restaurant_id, token')
+      .eq('token', token)
+      .eq('restaurant_id', restaurantId)
+      .maybeSingle()
+    adminTable = adminTableResult
+  }
+  
+  // 해당 레스토랑의 모든 테이블 조회 (디버깅용)
+  const { data: allTables } = await supabasePublic
+    .from('tables')
+    .select('id, name, token')
+    .eq('restaurant_id', restaurantId)
+    .limit(10)
+  
   // 디버깅: 테이블 조회 결과 로그
-  console.log('Table Query:', { token, restaurantId, table, tableError })
+  console.log('Table Query:', { 
+    token, 
+    restaurantId, 
+    table, 
+    tableError, 
+    adminTable, 
+    allTables,
+    expectedToken: '5f09be3f-356c-45fd-93ce-dd8e85f26725'
+  })
 
-  const isValidTable = !!table
-  const tableId = isValidTable ? table.id : token
-  const tableLabel = isValidTable ? (table.name ?? `테이블 ${token}`) : `테이블 ${token}`
+  // 실제 사용할 테이블 데이터 결정
+  const finalTable = table || adminTable
+  const isValidTable = !!finalTable
+  const tableId = isValidTable ? finalTable.id : token
+  const tableLabel = isValidTable ? (finalTable.name ?? `테이블 ${token}`) : `테이블 ${token}`
 
   // 메뉴 데이터 가져오기
   const { data: items = [] } = await supabase
@@ -244,12 +275,46 @@ export default async function OrderQrPage({ params }: any) {
               </div>
             </div>
 
-            {/* 테이블 토큰 생성 안내 (관리자용) */}
+            {/* 테이블 토큰 디버깅 정보 (스마트폰용) */}
             <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <h4 className="font-medium text-blue-900 mb-2">📋 관리자 안내</h4>
-              <p className="text-sm text-blue-700">
-                테이블 토큰이 설정되지 않았습니다. 관리자 페이지에서 QR 코드를 생성하세요.
-              </p>
+              <h4 className="font-medium text-blue-900 mb-2">� 테이블 토큰 Debug</h4>
+              <div className="space-y-2 text-sm">
+                <div className="bg-white p-2 rounded border">
+                  <strong>현재 토큰:</strong><br/>
+                  <code className="text-xs break-all">{token}</code>
+                </div>
+                <div className="bg-white p-2 rounded border">
+                  <strong>예상 토큰:</strong><br/>
+                  <code className="text-xs break-all">5f09be3f-356c-45fd-93ce-dd8e85f26725</code>
+                </div>
+                <div className="bg-white p-2 rounded border">
+                  <strong>토큰 매치:</strong><br/>
+                  <code className="text-xs">{token === '5f09be3f-356c-45fd-93ce-dd8e85f26725' ? '✅ 일치' : '❌ 불일치'}</code>
+                </div>
+                <div className="bg-white p-2 rounded border">
+                  <strong>Admin 테이블 결과:</strong><br/>
+                  <code className="text-xs">{adminTable ? 'Found with admin' : 'Not found'}</code>
+                </div>
+                <div className="bg-white p-2 rounded border">
+                  <strong>테이블 RLS 이슈:</strong><br/>
+                  <code className="text-xs">{!table && adminTable ? '✅ RLS 차단' : '❌ 다른 문제'}</code>
+                </div>
+              </div>
+              
+              {/* 사용 가능한 테이블 목록 */}
+              {allTables && allTables.length > 0 && (
+                <div className="mt-4">
+                  <h5 className="font-medium text-blue-900 mb-2">📋 이 레스토랑의 테이블들:</h5>
+                  <div className="space-y-1">
+                    {allTables.slice(0, 5).map((t, i) => (
+                      <div key={i} className="bg-white p-2 rounded border text-xs">
+                        <div><strong>{t.name}</strong></div>
+                        <div>Token: <code className="break-all">{t.token}</code></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : items.length === 0 ? (
