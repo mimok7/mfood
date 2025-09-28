@@ -93,25 +93,25 @@ export default async function Home() {
       <section className="bg-gradient-to-br from-orange-50 to-red-100 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              스마트한 레스토랑 관리의 
-              <br />
+            <h1 className="text-4xl font-bold text-gray-900 mb-6">
+              <div className="mb-4">스마트한 레스토랑 관리의</div>
               <span className="text-orange-600">새로운 기준</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              QR 코드 주문부터 키친 관리, 매출 분석까지. 
+              QR 코드 주문으로 인건비 절감부터 키친 관리, 매출 분석까지.
+              <br />
               mfood와 함께 레스토랑 운영을 혁신하세요.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
                 href="/guest" 
-                className="bg-orange-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-orange-700 transition-colors"
+                className="bg-orange-600 text-white px-6 py-3 rounded-lg text-base font-semibold hover:bg-orange-700 transition-colors"
               >
                 QR 주문 체험하기
               </Link>
               <Link 
                 href="/auth/sign-in" 
-                className="bg-white text-orange-600 px-8 py-4 rounded-lg text-lg font-semibold border-2 border-orange-600 hover:bg-orange-50 transition-colors"
+                className="bg-white text-orange-600 px-6 py-3 rounded-lg text-base font-semibold border-2 border-orange-600 hover:bg-orange-50 transition-colors"
               >
                 관리자 로그인
               </Link>
@@ -298,13 +298,13 @@ export default async function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/guest" 
-              className="bg-white text-orange-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-600 px-6 py-3 rounded-lg text-base font-semibold hover:bg-gray-100 transition-colors"
             >
               QR 주문 체험
             </Link>
             <Link 
               href="/auth/sign-in" 
-              className="bg-orange-700 text-white px-8 py-4 rounded-lg text-lg font-semibold border-2 border-orange-700 hover:bg-orange-800 transition-colors"
+              className="bg-orange-700 text-white px-6 py-3 rounded-lg text-base font-semibold border-2 border-orange-700 hover:bg-orange-800 transition-colors"
             >
               시스템 도입 문의
             </Link>
@@ -358,9 +358,9 @@ export default async function Home() {
             <div>
               <h4 className="text-lg font-semibold mb-4">연락처</h4>
               <ul className="space-y-2 text-gray-400">
-                <li>📧 contact@mfood.com</li>
-                <li>📞 1588-1234</li>
-                <li>🏢 서울시 강남구 테헤란로</li>
+                <li>📧 mfood@stayhalong.com</li>
+                <li>📞 010-6282-3959</li>
+                <li>🏢 경기도 용인시 수지구 광교마을로</li>
                 <li>⏰ 평일 09:00-18:00</li>
               </ul>
             </div>

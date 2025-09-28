@@ -46,7 +46,7 @@ export default function PricingPage() {
             모든 플랜에서 핵심 기능을 제공하며, 언제든지 업그레이드 가능합니다.
           </p>
           <div className="inline-flex items-center bg-green-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium">
-            🎉 2025년 1월까지 모든 플랜 50% 할인!
+            🎉 2026년 1월까지 모든 플랜 50% 할인!
           </div>
         </div>
       </section>
@@ -62,10 +62,10 @@ export default function PricingPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">스타터</h3>
                 <p className="text-gray-600 mb-6">소규모 카페/레스토랑을 위한 기본 플랜</p>
                 <div className="text-center">
-                  <span className="text-4xl font-bold text-gray-900">₩49,000</span>
+                  <span className="text-4xl font-bold text-gray-900">₩10,000</span>
                   <span className="text-gray-600">/월</span>
                   <div className="text-sm text-green-600 font-medium mt-1">
-                    ~~₩98,000~~ 50% 할인 적용
+                    ~~₩20,000~~ 50% 할인 적용
                   </div>
                 </div>
               </div>
@@ -135,10 +135,10 @@ export default function PricingPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">프로페셔널</h3>
                 <p className="text-gray-600 mb-6">중소 레스토랑을 위한 완전한 솔루션</p>
                 <div className="text-center">
-                  <span className="text-4xl font-bold text-blue-600">₩99,000</span>
+                  <span className="text-4xl font-bold text-blue-600">₩30,000</span>
                   <span className="text-gray-600">/월</span>
                   <div className="text-sm text-green-600 font-medium mt-1">
-                    ~~₩198,000~~ 50% 할인 적용
+                    ~~₩60,000~~ 50% 할인 적용
                   </div>
                 </div>
               </div>
@@ -202,10 +202,10 @@ export default function PricingPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">엔터프라이즈</h3>
                 <p className="text-gray-600 mb-6">대형 체인점 및 프랜차이즈를 위한 플랜</p>
                 <div className="text-center">
-                  <span className="text-4xl font-bold text-gray-900">₩199,000</span>
+                  <span className="text-4xl font-bold text-gray-900">₩100,000</span>
                   <span className="text-gray-600">/월</span>
                   <div className="text-sm text-green-600 font-medium mt-1">
-                    ~~₩398,000~~ 50% 할인 적용
+                    ~~₩200,000~~ 50% 할인 적용
                   </div>
                 </div>
               </div>

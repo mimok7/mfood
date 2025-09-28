@@ -99,7 +99,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">일반 문의</h3>
                   <p className="text-gray-600 mb-2">제품 문의, 도입 상담, 견적 요청</p>
-                  <p className="text-blue-600 font-medium">contact@mfood.com</p>
+                  <p className="text-blue-600 font-medium">mfood@stayhalong.com</p>
                 </div>
               </div>
 
@@ -113,7 +113,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">기술 지원</h3>
                   <p className="text-gray-600 mb-2">시스템 오류, 사용법 문의, 기술적 이슈</p>
-                  <p className="text-green-600 font-medium">support@mfood.com</p>
+                  <p className="text-green-600 font-medium">mfood@stayhalong.com</p>
                 </div>
               </div>
 
@@ -127,7 +127,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">전화 상담</h3>
                   <p className="text-gray-600 mb-2">평일 09:00 - 18:00 (점심시간 12:00-13:00 제외)</p>
-                  <p className="text-purple-600 font-medium text-xl">1588-1234</p>
+                  <p className="text-purple-600 font-medium text-xl">010-6282-3959</p>
                 </div>
               </div>
 
@@ -141,7 +141,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">24시간 응급 지원</h3>
                   <p className="text-gray-600 mb-2">엔터프라이즈 고객 전용 (시스템 장애 시)</p>
-                  <p className="text-red-600 font-medium">emergency@mfood.com</p>
+                  <p className="text-red-600 font-medium">mfood@stayhalong.com</p>
                 </div>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function ContactPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  서울특별시 강남구 테헤란로 123 mfood빌딩 5층
+                  경기도 용인시 수지구 광교마을로
                 </p>
                 <p className="flex items-center">
                   <svg className="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
