@@ -55,25 +55,48 @@ export default async function OrderQrPage({ params }: any) {
   
   const supabase = createSupabaseServer()
 
-  // 레스토랑 존재 여부 먼저 확인
-  const { data: restaurant, error: restaurantError } = await supabase
+  // 레스토랑 존재 여부 먼저 확인 (RLS 우회를 위해 service role 사용)
+  const { createClient } = await import('@supabase/supabase-js')
+  const supabasePublic = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+  
+  // 먼저 일반 쿼리 시도
+  const { data: restaurant, error: restaurantError } = await supabasePublic
     .from('restaurants')
     .select('id, name, slug')
     .eq('id', restaurantId)
     .maybeSingle()
   
+  // 만약 결과가 없으면 관리자 권한으로 다시 시도
+  let adminRestaurant = null
+  if (!restaurant) {
+    const { supabaseAdmin } = await import('@/lib/supabase-admin')
+    const adminClient = supabaseAdmin()
+    const { data: adminResult } = await adminClient
+      .from('restaurants')
+      .select('id, name, slug')
+      .eq('id', restaurantId)
+      .maybeSingle()
+    adminRestaurant = adminResult
+  }
+  
   // 디버깅: 레스토랑 조회 결과 로그
-  console.log('Restaurant Query:', { restaurantId, restaurant, restaurantError })
+  console.log('Restaurant Query:', { restaurantId, restaurant, restaurantError, adminRestaurant })
   
   // 모든 레스토랑 조회 (디버깅용)
-  const { data: allRestaurants } = await supabase
+  const { data: allRestaurants } = await supabasePublic
     .from('restaurants')
     .select('id, name, slug')
     .limit(5)
   
   console.log('All Restaurants:', allRestaurants)
 
-  if (!restaurant) {
+  // 실제 사용할 레스토랑 데이터 결정
+  const finalRestaurant = restaurant || adminRestaurant
+
+  if (!finalRestaurant) {
     return (
       <div className="min-h-screen bg-gray-50 p-4">
         <div className="bg-white rounded-xl shadow-lg p-6 max-w-lg mx-auto">
@@ -105,6 +128,14 @@ export default async function OrderQrPage({ params }: any) {
               <div className="bg-white p-2 rounded border">
                 <strong>Restaurant Error:</strong><br/>
                 <code className="text-xs">{restaurantError?.message || 'null'}</code>
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <strong>Admin Query Result:</strong><br/>
+                <code className="text-xs">{adminRestaurant ? 'Found with admin' : 'Not found'}</code>
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <strong>RLS Issue:</strong><br/>
+                <code className="text-xs">{!restaurant && adminRestaurant ? '✅ RLS 차단됨' : '❌ 다른 문제'}</code>
               </div>
             </div>
           </div>
@@ -180,7 +211,7 @@ export default async function OrderQrPage({ params }: any) {
         <div className="max-w-screen-sm mx-auto px-4 py-4">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold text-gray-900">
-              {restaurant.name} ({tableLabel})
+              {finalRestaurant.name} ({tableLabel})
             </h1>
             <p className="text-base text-gray-600">메뉴를 선택하고 주문해보세요</p>
             
@@ -207,7 +238,7 @@ export default async function OrderQrPage({ params }: any) {
                     매장에 비치된 테이블 QR 코드를 스캔하여 접속해 주세요.
                   </p>
                   <div className="text-sm text-yellow-600 mt-2">
-                    토큰: {token} | 레스토랑: {restaurant.name}
+                    토큰: {token} | 레스토랑: {finalRestaurant.name}
                   </div>
                 </div>
               </div>
