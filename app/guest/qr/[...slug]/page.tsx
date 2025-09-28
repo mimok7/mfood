@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
   const token = slug[1] || ''
   
   return {
-    title: `Welcome Food - 테이블 ${token}`,
+    title: `mfood - 테이블 ${token}`,
     description: '맛있는 음식을 주문하세요',
   }
 }
@@ -27,12 +27,35 @@ export default async function OrderQrPage({ params }: any) {
   const restaurantId = slug[0] || ''
   const token = slug[1] || ''
   
+  // 디버깅 정보
+  console.log('QR Access Debug:', { restaurantId, token, slug })
+  
   const supabase = createSupabaseServer()
 
-  // Find table by token and restaurant_id
+  // 레스토랑 존재 여부 먼저 확인
+  const { data: restaurant } = await supabase
+    .from('restaurants')
+    .select('id, name, slug')
+    .eq('id', restaurantId)
+    .maybeSingle()
+
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
+          <div className="text-6xl mb-4">🏪</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">레스토랑을 찾을 수 없습니다</h1>
+          <p className="text-gray-600 mb-4">요청하신 레스토랑 정보가 존재하지 않습니다.</p>
+          <p className="text-sm text-gray-400">Restaurant ID: {restaurantId}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 테이블 토큰으로 테이블 찾기
   const { data: table } = await supabase
     .from('tables')
-    .select('id,name,restaurant_id')
+    .select('id, name, restaurant_id, token')
     .eq('token', token)
     .eq('restaurant_id', restaurantId)
     .maybeSingle()
@@ -41,55 +64,95 @@ export default async function OrderQrPage({ params }: any) {
   const tableId = isValidTable ? table.id : token
   const tableLabel = isValidTable ? (table.name ?? `테이블 ${token}`) : `테이블 ${token}`
 
-  let restaurantName = 'Restaurant'
-  try {
-    const { data: rs } = await supabase
-      .from('restaurants')
-      .select('name')
-      .eq('id', restaurantId)
-      .maybeSingle()
-    restaurantName = rs?.name ?? restaurantName
-  } catch (e) {}
-
+  // 메뉴 데이터 가져오기
   const { data: items = [] } = await supabase
     .from('menu_items')
-    .select('id,name,price,category_id,is_active')
+    .select('id, name, price, category_id, is_active')
     .eq('restaurant_id', restaurantId)
     .eq('is_active', true)
     .order('created_at', { ascending: true })
 
   const { data: categories = [] } = await supabase
     .from('menu_categories')
-    .select('id,name')
+    .select('id, name, position')
     .eq('restaurant_id', restaurantId)
     .order('position', { ascending: true })
 
-  // QR 전용 강제: 유효한 테이블(token+restaurant 일치)일 때만 주문 초기화 허용
+  // QR 전용 강제: 유효한 테이블일 때만 주문 초기화
   if (isValidTable) {
-    await getOrCreateOpenOrder(tableId, 'qr')
+    try {
+      await getOrCreateOpenOrder(tableId, 'qr')
+    } catch (error) {
+      console.error('주문 초기화 실패:', error)
+    }
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 헤더 */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-screen-sm mx-auto px-4 py-4">
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-gray-900">{restaurantName} ({tableLabel})</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {restaurant.name} ({tableLabel})
+            </h1>
             <p className="text-base text-gray-600">메뉴를 선택하고 주문해보세요</p>
+            
+            {/* 디버깅 정보 (개발 환경에서만 표시) */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-400 bg-gray-100 p-2 rounded mt-2">
+                Debug: Restaurant={restaurantId}, Token={token}, Valid={isValidTable ? '✅' : '❌'}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
+      {/* 메인 콘텐츠 */}
       <div className="max-w-screen-sm mx-auto px-4 pb-32">
         {!isValidTable ? (
-          <div className="bg-yellow-100 border border-yellow-300 text-yellow-900 rounded-xl p-4 text-center">
-            🔒 QR 인증이 필요합니다. 매장 QR을 스캔해 접속해 주세요.
+          <div className="mt-8">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-r-xl">
+              <div className="flex items-center">
+                <div className="text-yellow-400 text-2xl mr-3">⚠️</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-yellow-800">QR 인증 필요</h3>
+                  <p className="text-yellow-700 mt-1">
+                    매장에 비치된 테이블 QR 코드를 스캔하여 접속해 주세요.
+                  </p>
+                  <div className="text-sm text-yellow-600 mt-2">
+                    토큰: {token} | 레스토랑: {restaurant.name}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 테이블 토큰 생성 안내 (관리자용) */}
+            <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <h4 className="font-medium text-blue-900 mb-2">📋 관리자 안내</h4>
+              <p className="text-sm text-blue-700">
+                테이블 토큰이 설정되지 않았습니다. 관리자 페이지에서 QR 코드를 생성하세요.
+              </p>
+            </div>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="mt-8 text-center">
+            <div className="text-6xl mb-4">🍽️</div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">메뉴 준비 중</h2>
+            <p className="text-gray-600">아직 등록된 메뉴가 없습니다.</p>
           </div>
         ) : (
-          <ClientOrderPanel tableId={tableId} items={items} categories={categories} />
+          <div className="mt-6">
+            <ClientOrderPanel 
+              tableId={tableId} 
+              items={items} 
+              categories={categories} 
+            />
+          </div>
         )}
       </div>
 
+      {/* 하단 주문 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
         <div className="max-w-screen-sm mx-auto p-4">
           <form data-cart-form="true" data-table-id={tableId} className="space-y-4">
@@ -103,6 +166,7 @@ export default async function OrderQrPage({ params }: any) {
                 type="button"
                 data-action="toggle-order-history"
                 className="flex-1 py-4 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl shadow-lg transition-all duration-200 active:scale-95 text-base border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isValidTable}
               >
                 📋 주문내역
               </button>
@@ -112,8 +176,13 @@ export default async function OrderQrPage({ params }: any) {
         </div>
       </div>
 
+      {/* QR 가드 컴포넌트 */}
       {isValidTable && (
-        <QrOrderGuard restaurantId={restaurantId} token={token} tableId={tableId} />
+        <QrOrderGuard 
+          restaurantId={restaurantId} 
+          token={token} 
+          tableId={tableId} 
+        />
       )}
     </div>
   )
