@@ -40,7 +40,13 @@ alter table public.order_items enable row level security;
 -- Clear existing generic policies before creating specific ones
 drop policy if exists "users can view own profile" on public.user_profile;
 drop policy if exists "users can update own profile" on public.user_profile;
+drop policy if exists "profile_read_own" on public.user_profile;
+drop policy if exists "profile_update_own" on public.user_profile;
+drop policy if exists "profile_read_admin" on public.user_profile;
+drop policy if exists "profile_update_admin" on public.user_profile;
 drop policy if exists "auth users can read restaurants" on public.restaurants;
+drop policy if exists "restaurants_read" on public.restaurants;
+drop policy if exists "restaurants_manage_admin" on public.restaurants;
 drop policy if exists "read menu categories by restaurant" on public.menu_categories;
 drop policy if exists "read menu items by restaurant" on public.menu_items;
 drop policy if exists "read tables" on public.tables;
@@ -91,6 +97,10 @@ create or replace procedure public.create_restaurant_rls_policies(p_table_name t
 language plpgsql
 as $$
 begin
+  -- Drop existing policies first
+  execute format('drop policy if exists "%1$s_read" on public.%1$s', p_table_name);
+  execute format('drop policy if exists "%1$s_manage" on public.%1$s', p_table_name);
+
   -- Policy for reading data:
   -- Authenticated users can read data if it belongs to their assigned restaurant.
   -- Admins can read data from any restaurant.
@@ -125,6 +135,10 @@ call public.create_restaurant_rls_policies('orders');
 
 -- == Policies for `order_items` ==
 -- `order_items` does not have a direct `restaurant_id`, so we check through the `orders` table.
+
+-- Drop existing policies first
+drop policy if exists "order_items_read" on public.order_items;
+drop policy if exists "order_items_manage" on public.order_items;
 
 -- Read policy for order_items
 create policy "order_items_read" on public.order_items for select

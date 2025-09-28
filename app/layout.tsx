@@ -2,7 +2,7 @@ import '../styles/globals.css'
 import Shell from './components/Shell'
 
 export const metadata = {
-  title: 'Restaurant POS',
+  title: 'Mfood POS',
   description: '매장 운영 통합 패널',
 }
 
