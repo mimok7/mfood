@@ -10,7 +10,12 @@ import type { Metadata } from 'next'
 export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: any): Promise<Metadata> {
-  const resolvedParams = params ? await params : undefined
+  let resolvedParams;
+  try {
+    resolvedParams = params ? await params : undefined;
+  } catch (error) {
+    resolvedParams = { slug: [] };
+  }
   const slug = resolvedParams?.slug || []
   const restaurantId = slug[0] || ''
   const token = slug[1] || ''
@@ -22,7 +27,13 @@ export async function generateMetadata({ params }: any): Promise<Metadata> {
 }
 
 export default async function OrderQrPage({ params }: any) {
-  const resolvedParams = params ? await params : undefined
+  let resolvedParams;
+  try {
+    resolvedParams = params ? await params : undefined;
+  } catch (error) {
+    console.error('Params resolution error:', error);
+    resolvedParams = { slug: [] };
+  }
   const slug = resolvedParams?.slug || []
   const restaurantId = slug[0] || ''
   const token = slug[1] || ''
@@ -112,12 +123,12 @@ export default async function OrderQrPage({ params }: any) {
           )}
 
           <div className="text-center">
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            <a 
+              href={`/guest/qr/${slug.join('/')}`}
+              className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
               🔄 새로고침
-            </button>
+            </a>
           </div>
         </div>
       </div>
