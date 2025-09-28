@@ -28,7 +28,7 @@ export default async function OrderQrPage({ params }: any) {
   const token = slug[1] || ''
   
   // 디버깅 정보
-  console.log('QR Access Debug:', { restaurantId, token, slug })
+  console.log('QR Access Debug:', { restaurantId, token, slug, fullSlug: resolvedParams?.slug })
   
   const supabase = createSupabaseServer()
 
@@ -46,7 +46,11 @@ export default async function OrderQrPage({ params }: any) {
           <div className="text-6xl mb-4">🏪</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">레스토랑을 찾을 수 없습니다</h1>
           <p className="text-gray-600 mb-4">요청하신 레스토랑 정보가 존재하지 않습니다.</p>
-          <p className="text-sm text-gray-400">Restaurant ID: {restaurantId}</p>
+          <div className="text-sm text-gray-400 space-y-1">
+            <p>Restaurant ID: {restaurantId}</p>
+            <p>Token: {token}</p>
+            <p>Full URL: /guest/qr/{slug.join('/')}</p>
+          </div>
         </div>
       </div>
     )
