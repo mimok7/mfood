@@ -28,14 +28,19 @@ export default async function OrderQrPage({ params }: any) {
   const token = slug[1] || ''
   
   // 디버깅 정보
-  console.log('QR Access Debug:', { 
+  const debugInfo = {
     restaurantId, 
     token, 
     slug, 
     fullSlug: resolvedParams?.slug,
     rawParams: params,
-    resolvedParams 
-  })
+    resolvedParams,
+    slugLength: slug.length,
+    expectedRestaurantId: 'efb8dcee-fec0-41a0-9056-bddba237b2f7',
+    isRestaurantIdMatch: restaurantId === 'efb8dcee-fec0-41a0-9056-bddba237b2f7'
+  }
+  
+  console.log('QR Access Debug:', debugInfo)
   
   const supabase = createSupabaseServer()
 
@@ -48,25 +53,71 @@ export default async function OrderQrPage({ params }: any) {
   
   // 디버깅: 레스토랑 조회 결과 로그
   console.log('Restaurant Query:', { restaurantId, restaurant, restaurantError })
+  
+  // 모든 레스토랑 조회 (디버깅용)
+  const { data: allRestaurants } = await supabase
+    .from('restaurants')
+    .select('id, name, slug')
+    .limit(5)
+  
+  console.log('All Restaurants:', allRestaurants)
 
   if (!restaurant) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
-          <div className="text-6xl mb-4">🏪</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">레스토랑을 찾을 수 없습니다</h1>
-          <p className="text-gray-600 mb-4">요청하신 레스토랑 정보가 존재하지 않습니다.</p>
-          <div className="text-sm text-gray-400 space-y-1 bg-red-50 p-3 rounded">
-            <p><strong>Debug Info:</strong></p>
-            <p>Restaurant ID: <code>{restaurantId}</code></p>
-            <p>Token: <code>{token}</code></p>
-            <p>Full URL: <code>/guest/qr/{slug.join('/')}</code></p>
-            <p>Slug Array: <code>[{slug.map(s => `"${s}"`).join(', ')}]</code></p>
-            <p>Expected: efb8dcee-fec0-41a0-9056-bddba237b2f7</p>
-            <details className="mt-2">
-              <summary className="cursor-pointer text-blue-600">Raw Data</summary>
-              <pre className="text-xs mt-1 overflow-auto">{JSON.stringify({ resolvedParams, slug }, null, 2)}</pre>
-            </details>
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="bg-white rounded-xl shadow-lg p-6 max-w-lg mx-auto">
+          <div className="text-6xl mb-4 text-center">🏪</div>
+          <h1 className="text-xl font-bold text-gray-900 mb-4 text-center">레스토랑을 찾을 수 없습니다</h1>
+          
+          {/* 스마트폰용 디버깅 정보 */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <h2 className="font-bold text-red-800 mb-2">🔍 Debug Info (스마트폰용)</h2>
+            <div className="space-y-2 text-sm">
+              <div className="bg-white p-2 rounded border">
+                <strong>Restaurant ID:</strong><br/>
+                <code className="text-xs break-all">{restaurantId}</code>
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <strong>Token:</strong><br/>
+                <code className="text-xs break-all">{token}</code>
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <strong>Slug Array:</strong><br/>
+                <code className="text-xs">[{slug.map(s => `"${s}"`).join(', ')}]</code>
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <strong>Slug Length:</strong> {debugInfo.slugLength}
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <strong>Match Expected:</strong> {debugInfo.isRestaurantIdMatch ? '✅ YES' : '❌ NO'}
+              </div>
+              <div className="bg-white p-2 rounded border">
+                <strong>Restaurant Error:</strong><br/>
+                <code className="text-xs">{restaurantError?.message || 'null'}</code>
+              </div>
+            </div>
+          </div>
+
+          {/* 사용 가능한 레스토랑 목록 */}
+          {allRestaurants && allRestaurants.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h3 className="font-bold text-blue-800 mb-2">📋 사용 가능한 레스토랑:</h3>
+              {allRestaurants.map((r, i) => (
+                <div key={i} className="bg-white p-2 rounded border mb-2 text-sm">
+                  <div><strong>Name:</strong> {r.name}</div>
+                  <div><strong>ID:</strong> <code className="text-xs break-all">{r.id}</code></div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="text-center">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+            >
+              🔄 새로고침
+            </button>
           </div>
         </div>
       </div>
