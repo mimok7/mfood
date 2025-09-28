@@ -2,7 +2,6 @@
 import { getOrCreateOpenOrder } from '@/app/order/actions'
 import CartClientScript from '@/components/CartClientScript'
 import ClientCart from '@/components/ClientCart'
-import { createSupabaseServer } from '@/lib/supabase-server'
 import ClientOrderPanel from '@/components/ClientOrderPanel'
 import QrOrderGuard from '@/components/QrOrderGuard'
 import type { Metadata } from 'next'
@@ -38,193 +37,61 @@ export default async function OrderQrPage({ params }: any) {
   const restaurantId = slug[0] || ''
   const token = slug[1] || ''
   
-  // 디버깅 정보
-  const debugInfo = {
-    restaurantId, 
-    token, 
-    slug, 
-    fullSlug: resolvedParams?.slug,
-    rawParams: params,
-    resolvedParams,
-    slugLength: slug.length,
-    expectedRestaurantId: 'efb8dcee-fec0-41a0-9056-bddba237b2f7',
-    isRestaurantIdMatch: restaurantId === 'efb8dcee-fec0-41a0-9056-bddba237b2f7'
-  }
-  
-  console.log('QR Access Debug:', debugInfo)
-  
-  const supabase = createSupabaseServer()
-
-  // 레스토랑 존재 여부 먼저 확인 (RLS 우회를 위해 service role 사용)
-  const { createClient } = await import('@supabase/supabase-js')
-  const supabasePublic = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  
-  // 먼저 일반 쿼리 시도
-  const { data: restaurant, error: restaurantError } = await supabasePublic
+  // 레스토랑 조회 (관리자 권한 사용)
+  const { supabaseAdmin } = await import('@/lib/supabase-admin')
+  const adminClient = supabaseAdmin()
+  const { data: restaurant } = await adminClient
     .from('restaurants')
-    .select('id, name, slug')
+    .select('id, name')
     .eq('id', restaurantId)
     .maybeSingle()
-  
-  // 만약 결과가 없으면 관리자 권한으로 다시 시도
-  let adminRestaurant = null
+
   if (!restaurant) {
-    const { supabaseAdmin } = await import('@/lib/supabase-admin')
-    const adminClient = supabaseAdmin()
-    const { data: adminResult } = await adminClient
-      .from('restaurants')
-      .select('id, name, slug')
-      .eq('id', restaurantId)
-      .maybeSingle()
-    adminRestaurant = adminResult
-  }
-  
-  // 디버깅: 레스토랑 조회 결과 로그
-  console.log('Restaurant Query:', { restaurantId, restaurant, restaurantError, adminRestaurant })
-  
-  // 모든 레스토랑 조회 (디버깅용)
-  const { data: allRestaurants } = await supabasePublic
-    .from('restaurants')
-    .select('id, name, slug')
-    .limit(5)
-  
-  console.log('All Restaurants:', allRestaurants)
-
-  // 실제 사용할 레스토랑 데이터 결정
-  const finalRestaurant = restaurant || adminRestaurant
-
-  if (!finalRestaurant) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 max-w-lg mx-auto">
-          <div className="text-6xl mb-4 text-center">🏪</div>
-          <h1 className="text-xl font-bold text-gray-900 mb-4 text-center">레스토랑을 찾을 수 없습니다</h1>
-          
-          {/* 스마트폰용 디버깅 정보 */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <h2 className="font-bold text-red-800 mb-2">🔍 Debug Info (스마트폰용)</h2>
-            <div className="space-y-2 text-sm">
-              <div className="bg-white p-2 rounded border">
-                <strong>Restaurant ID:</strong><br/>
-                <code className="text-xs break-all">{restaurantId}</code>
-              </div>
-              <div className="bg-white p-2 rounded border">
-                <strong>Token:</strong><br/>
-                <code className="text-xs break-all">{token}</code>
-              </div>
-              <div className="bg-white p-2 rounded border">
-                <strong>Slug Array:</strong><br/>
-                <code className="text-xs">[{slug.map(s => `"${s}"`).join(', ')}]</code>
-              </div>
-              <div className="bg-white p-2 rounded border">
-                <strong>Slug Length:</strong> {debugInfo.slugLength}
-              </div>
-              <div className="bg-white p-2 rounded border">
-                <strong>Match Expected:</strong> {debugInfo.isRestaurantIdMatch ? '✅ YES' : '❌ NO'}
-              </div>
-              <div className="bg-white p-2 rounded border">
-                <strong>Restaurant Error:</strong><br/>
-                <code className="text-xs">{restaurantError?.message || 'null'}</code>
-              </div>
-              <div className="bg-white p-2 rounded border">
-                <strong>Admin Query Result:</strong><br/>
-                <code className="text-xs">{adminRestaurant ? 'Found with admin' : 'Not found'}</code>
-              </div>
-              <div className="bg-white p-2 rounded border">
-                <strong>RLS Issue:</strong><br/>
-                <code className="text-xs">{!restaurant && adminRestaurant ? '✅ RLS 차단됨' : '❌ 다른 문제'}</code>
-              </div>
-            </div>
-          </div>
-
-          {/* 사용 가능한 레스토랑 목록 */}
-          {allRestaurants && allRestaurants.length > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <h3 className="font-bold text-blue-800 mb-2">📋 사용 가능한 레스토랑:</h3>
-              {allRestaurants.map((r, i) => (
-                <div key={i} className="bg-white p-2 rounded border mb-2 text-sm">
-                  <div><strong>Name:</strong> {r.name}</div>
-                  <div><strong>ID:</strong> <code className="text-xs break-all">{r.id}</code></div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center">
-            <a 
-              href={`/guest/qr/${slug.join('/')}`}
-              className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              🔄 새로고침
-            </a>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
+          <div className="text-6xl mb-4">🏪</div>
+          <h1 className="text-xl font-bold text-gray-900 mb-4">레스토랑을 찾을 수 없습니다</h1>
+          <p className="text-gray-600 mb-6">QR 코드를 다시 확인해 주세요.</p>
+          <a 
+            href="/guest"
+            className="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            홈으로 돌아가기
+          </a>
         </div>
       </div>
     )
   }
 
   // 테이블 토큰으로 테이블 찾기
-  const { data: table, error: tableError } = await supabasePublic
+  const { data: table } = await adminClient
     .from('tables')
-    .select('id, name, restaurant_id, token')
+    .select('id, name')
     .eq('token', token)
     .eq('restaurant_id', restaurantId)
     .maybeSingle()
-  
-  // 만약 테이블을 찾지 못하면 관리자 권한으로 다시 시도
-  let adminTable = null
-  if (!table) {
-    const { supabaseAdmin } = await import('@/lib/supabase-admin')
-    const adminClient = supabaseAdmin()
-    const { data: adminTableResult } = await adminClient
-      .from('tables')
-      .select('id, name, restaurant_id, token')
-      .eq('token', token)
+  const isValidTable = !!table
+  const tableId = isValidTable ? table.id : token
+  const tableLabel = isValidTable ? (table.name ?? `테이블 ${token}`) : `테이블 ${token}`
+
+  // 메뉴 데이터 가져오기 (병렬 처리)
+  const [menuItemsResult, categoriesResult] = await Promise.all([
+    adminClient
+      .from('menu_items')
+      .select('id, name, price, category_id')
       .eq('restaurant_id', restaurantId)
-      .maybeSingle()
-    adminTable = adminTableResult
-  }
+      .eq('is_active', true)
+      .order('created_at', { ascending: true }),
+    adminClient
+      .from('menu_categories')
+      .select('id, name, position')
+      .eq('restaurant_id', restaurantId)
+      .order('position', { ascending: true })
+  ])
   
-  // 해당 레스토랑의 모든 테이블 조회 (디버깅용)
-  const { data: allTables } = await supabasePublic
-    .from('tables')
-    .select('id, name, token')
-    .eq('restaurant_id', restaurantId)
-    .limit(10)
-  
-  // 디버깅: 테이블 조회 결과 로그
-  console.log('Table Query:', { 
-    token, 
-    restaurantId, 
-    table, 
-    tableError, 
-    adminTable, 
-    allTables,
-    expectedToken: '5f09be3f-356c-45fd-93ce-dd8e85f26725'
-  })
-
-  // 실제 사용할 테이블 데이터 결정
-  const finalTable = table || adminTable
-  const isValidTable = !!finalTable
-  const tableId = isValidTable ? finalTable.id : token
-  const tableLabel = isValidTable ? (finalTable.name ?? `테이블 ${token}`) : `테이블 ${token}`
-
-  // 메뉴 데이터 가져오기
-  const { data: items = [] } = await supabase
-    .from('menu_items')
-    .select('id, name, price, category_id, is_active')
-    .eq('restaurant_id', restaurantId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: true })
-
-  const { data: categories = [] } = await supabase
-    .from('menu_categories')
-    .select('id, name, position')
-    .eq('restaurant_id', restaurantId)
-    .order('position', { ascending: true })
+  const items = menuItemsResult.data || []
+  const categories = categoriesResult.data || []
 
   // QR 전용 강제: 유효한 테이블일 때만 주문 초기화
   if (isValidTable) {
@@ -242,16 +109,11 @@ export default async function OrderQrPage({ params }: any) {
         <div className="max-w-screen-sm mx-auto px-4 py-4">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold text-gray-900">
-              {finalRestaurant.name} ({tableLabel})
+              {restaurant.name} ({tableLabel})
             </h1>
             <p className="text-base text-gray-600">메뉴를 선택하고 주문해보세요</p>
             
-            {/* 디버깅 정보 (개발 환경에서만 표시) */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-400 bg-gray-100 p-2 rounded mt-2">
-                Debug: Restaurant={restaurantId}, Token={token}, Valid={isValidTable ? '✅' : '❌'}
-              </div>
-            )}
+
           </div>
         </div>
       </div>
@@ -269,52 +131,19 @@ export default async function OrderQrPage({ params }: any) {
                     매장에 비치된 테이블 QR 코드를 스캔하여 접속해 주세요.
                   </p>
                   <div className="text-sm text-yellow-600 mt-2">
-                    토큰: {token} | 레스토랑: {finalRestaurant.name}
+                    토큰: {token} | 레스토랑: {restaurant.name}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 테이블 토큰 디버깅 정보 (스마트폰용) */}
+            {/* 관리자 안내 */}
             <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
               <h4 className="font-medium text-blue-900 mb-2">� 테이블 토큰 Debug</h4>
-              <div className="space-y-2 text-sm">
-                <div className="bg-white p-2 rounded border">
-                  <strong>현재 토큰:</strong><br/>
-                  <code className="text-xs break-all">{token}</code>
-                </div>
-                <div className="bg-white p-2 rounded border">
-                  <strong>예상 토큰:</strong><br/>
-                  <code className="text-xs break-all">5f09be3f-356c-45fd-93ce-dd8e85f26725</code>
-                </div>
-                <div className="bg-white p-2 rounded border">
-                  <strong>토큰 매치:</strong><br/>
-                  <code className="text-xs">{token === '5f09be3f-356c-45fd-93ce-dd8e85f26725' ? '✅ 일치' : '❌ 불일치'}</code>
-                </div>
-                <div className="bg-white p-2 rounded border">
-                  <strong>Admin 테이블 결과:</strong><br/>
-                  <code className="text-xs">{adminTable ? 'Found with admin' : 'Not found'}</code>
-                </div>
-                <div className="bg-white p-2 rounded border">
-                  <strong>테이블 RLS 이슈:</strong><br/>
-                  <code className="text-xs">{!table && adminTable ? '✅ RLS 차단' : '❌ 다른 문제'}</code>
-                </div>
-              </div>
-              
-              {/* 사용 가능한 테이블 목록 */}
-              {allTables && allTables.length > 0 && (
-                <div className="mt-4">
-                  <h5 className="font-medium text-blue-900 mb-2">📋 이 레스토랑의 테이블들:</h5>
-                  <div className="space-y-1">
-                    {allTables.slice(0, 5).map((t, i) => (
-                      <div key={i} className="bg-white p-2 rounded border text-xs">
-                        <div><strong>{t.name}</strong></div>
-                        <div>Token: <code className="break-all">{t.token}</code></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <p className="text-sm text-blue-700">
+                올바른 QR 코드를 스캔했는지 확인해주세요. 문제가 계속되면 매장 직원에게 문의해 주세요.
+              </p>
+
             </div>
           </div>
         ) : items.length === 0 ? (
