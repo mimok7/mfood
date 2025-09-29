@@ -1,6 +1,11 @@
+"use client"
 import Link from 'next/link'
+import { QRCodeCanvas } from 'qrcode.react'
 
 export default function ContactCardPage() {
+  // vCard (or MECARD) payload for contact save
+  // Using MECARD for broad smartphone compatibility
+  const mecard = `MECARD:N:mfood;;TEL:01062823959;EMAIL:mfood@stayhalong.com;ADR:경기도 용인시 수지구 광교마을로;NOTE:스마트 레스토랑 POS·QR 주문·키친 관리·매출 분석;`;
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-rose-100 flex items-center justify-center p-6">
       <div className="w-full max-w-xl">
@@ -61,6 +66,15 @@ export default function ContactCardPage() {
                   <div className="text-xs text-gray-500">상담 가능 시간</div>
                   <div className="text-gray-900 font-medium">평일 09:00 - 18:00</div>
                 </div>
+              </div>
+            </div>
+
+            {/* QR Code for contact save */}
+            <div className="mt-6">
+              <div className="rounded-xl border border-dashed border-gray-200 p-4 flex flex-col items-center">
+                <div className="text-sm text-gray-600 mb-2">QR 코드로 연락처 저장</div>
+                <QRCodeCanvas value={mecard} size={148} includeMargin className="rounded bg-white"/>
+                <div className="text-xs text-gray-400 mt-2">스마트폰 카메라로 스캔하여 연락처를 추가하세요</div>
               </div>
             </div>
 
