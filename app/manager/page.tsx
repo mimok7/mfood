@@ -171,8 +171,12 @@ export default async function ManagerPage() {
         </div>
       </div>
 
-  {/* 빠른 액션 섹션 */}
-  <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      {/* 빠른 액션 섹션 */}
+      <h2 className="text-2xl font-bold text-gray-900 flex items-center mt-10">
+        <span className="mr-2">🚀</span>
+        빠른 이동
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Link href="/manager/billing" className="block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden">
           <div className="bg-gradient-to-r from-red-500 to-pink-500 p-4">
             <div className="text-white text-2xl">🧮</div>
