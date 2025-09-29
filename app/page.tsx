@@ -350,7 +350,7 @@ export default async function Home() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/" className="hover:text-white transition-colors">홈</Link></li>
                 <li><Link href="/pricing" className="hover:text-white transition-colors">요금제</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition-colors">연락처</Link></li>
+                <li><Link href={'/contact/card' as Route} className="hover:text-white transition-colors">연락처</Link></li>
                 <li><Link href="/auth/sign-up" className="hover:text-white transition-colors">무료 체험</Link></li>
               </ul>
             </div>
