@@ -3,11 +3,13 @@
 import React, { useEffect, useState } from 'react'
 
 export default function RestaurantsEditor({ initialRestaurants }: { initialRestaurants: Array<{ id: string; name: string; slug?: string }> }) {
-  const [restaurants] = useState(initialRestaurants)
+  const [restaurants, setRestaurants] = useState(initialRestaurants)
   const [selected, setSelected] = useState<string | null>(restaurants[0]?.id ?? null)
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     if (selected) fetchDetails(selected)
@@ -58,11 +60,52 @@ export default function RestaurantsEditor({ initialRestaurants }: { initialResta
     }
   }
 
+  async function handleDelete() {
+    if (!selected || !data?.restaurant) return
+    setDeleteLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/admin/restaurants/${selected}/delete`, { method: 'POST' })
+      if (!res.ok) throw new Error(await res.text())
+      
+      const result = await res.json()
+      alert(result.message)
+      
+      // 삭제된 레스토랑을 목록에서 제거
+      const updatedRestaurants = restaurants.filter(r => r.id !== selected)
+      setRestaurants(updatedRestaurants)
+      
+      // 다른 레스토랑 선택 또는 선택 해제
+      const nextSelected = updatedRestaurants[0]?.id ?? null
+      setSelected(nextSelected)
+      setData(null)
+      setShowDeleteModal(false)
+      
+      // 페이지 새로고침
+      window.location.reload()
+    } catch (err: any) {
+      setError(err.message || '삭제 실패')
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
   return (
     <div className="w-full space-y-8">
       {/* 레스토랑 선택 섹션 */}
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">레스토랑 선택</h2>
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">레스토랑 선택</h2>
+          {selected && data?.restaurant && (
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-lg text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+            >
+              <span className="mr-2">🗑️</span>
+              레스토랑 삭제
+            </button>
+          )}
+        </div>
         <div className="max-w-md">
           <label className="block text-sm font-medium text-gray-700 mb-2">관리할 레스토랑</label>
           <select
@@ -246,6 +289,70 @@ export default function RestaurantsEditor({ initialRestaurants }: { initialResta
             </div>
           </div>
         </form>
+      )}
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && data?.restaurant && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-medium text-gray-900">레스토랑 삭제 확인</h3>
+                  <p className="text-sm text-gray-500">이 작업은 되돌릴 수 없습니다</p>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>"{data.restaurant.name}"</strong> 레스토랑을 삭제하시겠습니까?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm text-red-800 font-medium mb-2">다음 데이터가 모두 삭제됩니다:</p>
+                  <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
+                    <li>메뉴 카테고리 및 메뉴 아이템</li>
+                    <li>메뉴 옵션 그룹 및 옵션</li>
+                    <li>테이블 정보</li>
+                    <li>대기 명단</li>
+                    <li>주문 내역</li>
+                    <li>주방 대기열</li>
+                    <li>사용자 연결 정보</li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleteLoading}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteLoading}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50"
+                >
+                  {deleteLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      삭제 중...
+                    </>
+                  ) : (
+                    <>
+                      <span className="mr-2">🗑️</span>
+                      삭제 확인
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -2,6 +2,7 @@ import { requireRole } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import Link from 'next/link'
 import AddressFilter from './AddressFilter'
+import RestaurantList from './RestaurantList'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,58 +42,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       {/* 식당 목록 섹션 */}
       <AddressFilter currentFilter={addressFilter} />
 
-      <div className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
-        <div className='bg-gray-50 px-4 py-3 border-b border-gray-200'>
-          <h2 className='text-xl font-semibold text-gray-900 flex items-center'>
-            <span className='mr-2'>🏪</span>
-            식당 목록
-          </h2>
-          <p className='text-sm text-gray-600 mt-1'>총 식당 중 {restaurants?.length ?? 0}개 표시{addressFilter && ` (필터: ${addressFilter})`}</p>
-        </div>
-
-        {restaurants && restaurants.length > 0 ? (
-          <div className='p-4'>
-            <div className='grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3'>
-              {restaurants.map((restaurant) => (
-                <Link
-                  key={restaurant.id}
-                  href={`/admin/restaurants/${restaurant.id}`}
-                  className='block bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-lg p-3 hover:shadow-lg hover:border-blue-300 transition-all duration-200 group'
-                >
-                  <div className='text-center'>
-                    <div className='w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-200 transition-colors'>
-                      <span className='text-lg'>🏪</span>
-                    </div>
-                    <h3 className='text-xs font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors line-clamp-2'>
-                      {restaurant.name}
-                    </h3>
-                    {restaurant.address && (
-                      <div className='text-xs text-gray-600 mb-1 line-clamp-2'>
-                        📍 {restaurant.address}
-                      </div>
-                    )}
-                    <div className='text-xs text-gray-500'>
-                      ID: {restaurant.id.slice(0, 6)}...
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className='p-8 text-center'>
-            <div className='text-5xl mb-4'>🏪</div>
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>등록된 식당이 없습니다</h3>
-            <p className='text-gray-500 mb-4'>새 식당을 생성하여 관리 시스템에 포함시키세요.</p>
-            <Link
-              href='/admin/restaurants/new'
-              className='inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-            >
-              ➕ 새 식당 생성
-            </Link>
-          </div>
-        )}
-      </div>
+      <RestaurantList restaurants={restaurants || []} addressFilter={addressFilter} />
 
       {/* 추가 액션 섹션 */}
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
