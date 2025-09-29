@@ -45,6 +45,15 @@ export default async function AdminMenuPage({ params, searchParams }: { params: 
           <h1 className="text-2xl font-bold text-gray-900">메뉴 관리 (총 {items?.length || 0}개 메뉴)</h1>
           <p className="text-gray-600 mt-1">메뉴 카테고리와 메뉴 항목을 관리하세요</p>
         </div>
+        <div className="flex space-x-2">
+          <a 
+            href={`/admin/restaurants/${rid}/menu/options`}
+            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <span className="mr-2">🔧</span>
+            메뉴 옵션 관리
+          </a>
+        </div>
       </div>
 
       {/* 메시지 표시 */}
