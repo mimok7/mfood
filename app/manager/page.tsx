@@ -88,7 +88,7 @@ export default async function ManagerPage() {
           실시간 현황 대시보드
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* 주문 대기 카드 */}
           <div className="bg-white border border-orange-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
             <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-4 rounded-t-lg">
@@ -171,8 +171,8 @@ export default async function ManagerPage() {
         </div>
       </div>
 
-      {/* 빠른 액션 섹션 */}
-      <div className="grid grid-cols-5 gap-6">
+  {/* 빠른 액션 섹션 */}
+  <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Link href="/manager/billing" className="block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-200 group overflow-hidden">
           <div className="bg-gradient-to-r from-red-500 to-pink-500 p-4">
             <div className="text-white text-2xl">🧮</div>
