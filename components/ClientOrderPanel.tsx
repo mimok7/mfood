@@ -3,27 +3,17 @@ import React from 'react'
 import MenuGrid from '@/components/MenuGridClient'
 
 function getCategoryIdByName(categories: any[], names: string[]) {
-  // 실제 데이터베이스의 category_id를 직접 사용
-  const categoryMap: Record<string, string> = {
-    '면류': '2c4d2466-fe19-40b7-8706-da93807e51a7',
-    '볶음': '329d54d7-9fae-45e0-8d0e-a16820460e2c',
-    '음료': 'd4306eec-af54-4c3e-b08d-ff01fae037cd',
-    '주류': '7abf5bd3-a903-4939-bae1-01d653089e9b'
-  };
-
+  // 동적으로 categories 배열에서 카테고리 ID 찾기
   for (const name of names) {
-    if (categoryMap[name]) {
-      return categoryMap[name];
+    const category = categories.find(cat => cat.name === name);
+    if (category) {
+      return category.id;
     }
   }
-
   return 'all';
 }
 
-function isActive(categories: any[], names: string[], activeCategory: string) {
-  const id = getCategoryIdByName(categories, names)
-  return activeCategory === id
-}
+
 
 function OrderHistoryModal({ cart, setCart, isOpen, onClose, tableId, onCompleted, items }: { cart: any[], setCart: React.Dispatch<React.SetStateAction<any[]>>, isOpen: boolean, onClose: () => void, tableId: string, onCompleted?: () => void, items: any[] }) {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -173,11 +163,51 @@ function OrderHistoryModal({ cart, setCart, isOpen, onClose, tableId, onComplete
   )
 }
 
+// 초기 카테고리 ID 찾기 (식사 카테고리 우선)
+function getInitialCategoryId(categories: any[]) {
+  // 식사를 최우선으로 찾기
+  const mealCategory = categories.find(cat => cat.name === '식사');
+  if (mealCategory) {
+    return mealCategory.id;
+  }
+  
+  // 식사가 없으면 다른 식사 카테고리들 찾기
+  const mealCategories = ['안주', '밥류', '국물', '면류'];
+  for (const name of mealCategories) {
+    const category = categories.find(cat => cat.name === name);
+    if (category) {
+      return category.id;
+    }
+  }
+  
+  // 없으면 첫 번째 카테고리 사용
+  return categories.length > 0 ? categories[0].id : 'all';
+}
+
 export default function ClientOrderPanel({ tableId, items, categories = [] }: any) {
   const [activeCategory, setActiveCategory] = React.useState<string>('all')
   const [cart, setCart] = React.useState<any[]>([])
   const [showOrderHistory, setShowOrderHistory] = React.useState<boolean>(false)
   const [locked, setLocked] = React.useState<boolean>(false)
+  
+  // categories가 로드되면 초기 카테고리 설정
+  React.useEffect(() => {
+    if (categories.length > 0 && activeCategory === 'all') {
+      const initialId = getInitialCategoryId(categories);
+      setActiveCategory(initialId);
+    }
+  }, [categories, activeCategory]);
+
+  // 디버깅: categories 데이터 확인
+  React.useEffect(() => {
+    console.log('Categories:', categories)
+    console.log('Items:', items)
+  }, [categories, items])
+
+  // 디버깅: activeCategory 변경 확인
+  React.useEffect(() => {
+    console.log('Active Category changed to:', activeCategory)
+  }, [activeCategory])
 
 
 
@@ -201,12 +231,45 @@ export default function ClientOrderPanel({ tableId, items, categories = [] }: an
       <div className="space-y-6 py-6">
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">메뉴 선택</h3>
-          <div className="flex gap-2">
-            <button type="button" disabled={locked} onClick={() => setActiveCategory(getCategoryIdByName(categories, ['면류','볶음']))} className={`px-3 py-2 rounded-full border ${isActive(categories,['면류','볶음'], activeCategory) ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}>식사</button>
-            <button type="button" disabled={locked} onClick={() => setActiveCategory(getCategoryIdByName(categories, ['볶음']))} className={`px-3 py-2 rounded-full border ${isActive(categories,['볶음'], activeCategory) ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}>안주</button>
-            <button type="button" disabled={locked} onClick={() => setActiveCategory(getCategoryIdByName(categories, ['주류']))} className={`px-3 py-2 rounded-full border ${isActive(categories,['주류'], activeCategory) ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}>주류</button>
-            <button type="button" disabled={locked} onClick={() => setActiveCategory(getCategoryIdByName(categories, ['음료']))} className={`px-3 py-2 rounded-full border ${isActive(categories,['음료'], activeCategory) ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}>음료</button>
-            <button type="button" disabled={locked} onClick={() => setActiveCategory('all')} className={`px-3 py-2 rounded-full border ${activeCategory==='all' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}>전체</button>
+          <div className="flex gap-2 overflow-x-auto">
+            {/* 카테고리 순서: 식사 안주 주류 음료 전체 */}
+            {(() => {
+              const sortedCategories = [...categories].sort((a, b) => {
+                // 정확한 순서 정의: 식사를 제일 첫 번째로
+                const getCategoryOrder = (categoryName: string) => {
+                  if (categoryName === '식사') return 0;  // 식사 (제일 앞)
+                  if (categoryName === '안주') return 1;  // 안주
+                  if (categoryName === '주류') return 2;  // 주류
+                  if (categoryName === '음료') return 3;  // 음료
+                  return 4; // 기타 카테고리들
+                };
+                
+                const aOrder = getCategoryOrder(a.name);
+                const bOrder = getCategoryOrder(b.name);
+                return aOrder - bOrder;
+              });
+              
+              return sortedCategories.map((category: any) => (
+                <button 
+                  key={category.id}
+                  type="button" 
+                  disabled={locked} 
+                  onClick={() => setActiveCategory(category.id)} 
+                  className={`px-3 py-2 rounded-full border whitespace-nowrap ${activeCategory === category.id ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {category.name}
+                </button>
+              ));
+            })()}
+            {/* 전체 버튼 */}
+            <button 
+              type="button" 
+              disabled={locked} 
+              onClick={() => setActiveCategory('all')} 
+              className={`px-3 py-2 rounded-full border whitespace-nowrap ${activeCategory === 'all' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'} ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              전체
+            </button>
           </div>
         </div>
   <MenuGrid items={items} activeCategory={activeCategory} cart={cart} setCart={setCart} categories={categories} locked={locked} />

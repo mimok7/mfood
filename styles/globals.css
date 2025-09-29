@@ -5,3 +5,14 @@
 html, body {
   height: 100%;
 }
+
+/* 전역 버튼 스타일 - 기본 button 태그를 커스텀 Button 컴포넌트 스타일로 덮어쓰기 방지 */
+button:not([class*="bg-"]):not([class*="border-"]) {
+  @apply inline-flex items-center justify-center gap-2 
+         px-4 py-2 font-medium rounded-md 
+         transition-all duration-200 
+         focus:outline-none focus:ring-2 focus:ring-offset-2 
+         disabled:opacity-50 disabled:cursor-not-allowed
+         shadow-sm hover:shadow-md
+         bg-blue-600 hover:bg-blue-700 text-white;
+}

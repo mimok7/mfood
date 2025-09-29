@@ -2,6 +2,8 @@ export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import MenuList from '@/components/MenuList'
 import CategoryTabs from '@/components/CategoryTabs'
+import CategoryManager from '@/components/CategoryManager'
+import Button from '@/components/ui/Button'
 
 export default async function AdminMenuPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const resolvedParams = await params
@@ -116,33 +118,26 @@ export default async function AdminMenuPage({ params, searchParams }: { params: 
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="p-4">
-          {/* 카테고리 추가 폼 */}
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">새 카테고리 추가</h3>
-            <form action={`/api/admin/restaurants/${rid}/menu/category`} method="post" className="flex gap-4">
-              <input
-                type="text"
-                name="name"
-                placeholder="카테고리 이름"
-                className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              <input
-                type="number"
-                name="position"
-                placeholder="순서"
-                defaultValue={0}
-                className="w-24 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium">
-                추가
-              </button>
-            </form>
-          </div>
-
           {/* 메뉴 항목 추가 폼 */}
           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">새 메뉴 항목 추가</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-medium text-gray-900">새 메뉴 항목 추가</h3>
+              {/* 기본 메뉴 자동생성 버튼 */}
+              <form action={`/api/admin/restaurants/${rid}/menu/auto-menu`} method="post" className="inline">
+                <Button
+                  variant="warning"
+                  size="sm"
+                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                  completedText="메뉴 추가 완료"
+                  completedIcon="🎉"
+                  type="submit"
+                >
+                  <span>🍻</span>
+                  기본 주류/음료 자동추가
+                </Button>
+              </form>
+            </div>
+            
             <form action={`/api/admin/restaurants/${rid}/menu/item`} method="post" className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <input
                 type="text"
@@ -173,13 +168,81 @@ export default async function AdminMenuPage({ params, searchParams }: { params: 
                 placeholder="사진 URL (선택사항)"
                 className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
-              <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors font-medium">
+              <Button
+                variant="success"
+                completedText="메뉴 생성 완료"
+                completedIcon="✓"
+                type="submit"
+              >
                 메뉴 추가
-              </button>
+              </Button>
             </form>
+
+            {/* 자동생성 안내 */}
+            <div className="mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
+              <p className="text-sm text-orange-700">
+                <span className="font-medium">자동생성 메뉴:</span> 참이슬 프레쉬(5,000원), 처음처럼 프레쉬(5,000원), 사이다(2,000원), 콜라(2,000원)
+              </p>
+            </div>
           </div>
 
           <MenuList categories={categories as any} initialItems={items as any} restaurantId={rid} selectedCategory={selectedCategory} />
+
+          {/* 카테고리 추가 폼 */}
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-medium text-gray-900">새 카테고리 추가</h3>
+              {/* 카테고리 자동생성 버튼 */}
+              <form action={`/api/admin/restaurants/${rid}/menu/auto-categories`} method="post" className="inline">
+                <Button
+                  variant="info"
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+                  completedText="카테고리 생성 완료"
+                  completedIcon="✨"
+                  type="submit"
+                >
+                  <span>✨</span>
+                  기본 카테고리 자동생성
+                </Button>
+              </form>
+            </div>
+            
+            <form action={`/api/admin/restaurants/${rid}/menu/category`} method="post" className="flex gap-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="카테고리 이름"
+                className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <input
+                type="number"
+                name="position"
+                placeholder="순서"
+                defaultValue={0}
+                className="w-24 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <Button
+                variant="primary"
+                completedText="카테고리 생성 완료"
+                completedIcon="✓"
+                type="submit"
+              >
+                추가
+              </Button>
+            </form>
+            
+            {/* 자동생성 안내 */}
+            <div className="mt-3 p-2 bg-purple-50 border border-purple-200 rounded-md">
+              <p className="text-sm text-purple-700">
+                <span className="font-medium">자동생성 카테고리:</span> 식사, 안주, 주류, 음료 (이미 있는 카테고리는 건너뜀)
+              </p>
+            </div>
+          </div>
+
+          {/* 기존 카테고리 관리 */}
+          <CategoryManager categories={categories || []} restaurantId={rid} />
         </div>
       </div>
     </div>

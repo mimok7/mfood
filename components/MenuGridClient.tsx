@@ -4,6 +4,7 @@ import ImageModal from '@/components/ImageModal'
 
 export default function MenuGridClient({ items, activeCategory, cart, setCart, categories, locked = false }: any) {
   const [preview, setPreview] = useState<string | null>(null)
+  const [completedItems, setCompletedItems] = useState<Set<string>>(new Set())
   const filtered = items
     .filter((m: any) => activeCategory === 'all' || (m.category_id ? String(m.category_id) : 'uncat') === String(activeCategory))
 
@@ -34,6 +35,18 @@ export default function MenuGridClient({ items, activeCategory, cart, setCart, c
   }, [filtered, categories])
 
   const addToCart = (menuItem: any, quantity: number) => {
+    // 완료 상태 추가
+    setCompletedItems(prev => new Set(prev).add(menuItem.id))
+    
+    // 3초 후 완료 상태 제거
+    setTimeout(() => {
+      setCompletedItems(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(menuItem.id)
+        return newSet
+      })
+    }, 3000)
+
     const existingItem = cart.find((item: any) => item.id === menuItem.id)
     if (existingItem) {
       setCart(cart.map((item: any) => 
@@ -94,7 +107,7 @@ export default function MenuGridClient({ items, activeCategory, cart, setCart, c
                           </div>
                           <button 
                             type="button" 
-                            disabled={locked}
+                            disabled={locked || completedItems.has(m.id)}
                             data-menu-id={m.id} 
                             data-menu-name={m.name} 
                             onClick={() => {
@@ -102,9 +115,15 @@ export default function MenuGridClient({ items, activeCategory, cart, setCart, c
                               const quantity = parseInt(qtySelect?.value || '1')
                               addToCart(m, quantity)
                             }}
-                            className={`add-to-cart flex-1 py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-base ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`add-to-cart flex-1 py-3 px-4 font-semibold rounded-lg transition-all duration-300 text-base ${
+                              completedItems.has(m.id)
+                                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-not-allowed transform scale-105'
+                                : locked 
+                                ? 'bg-gray-400 text-white opacity-50 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white active:scale-95'
+                            }`}
                           >
-                            🛒 담기
+                            {completedItems.has(m.id) ? '✅ 완료' : '🛒 담기'}
                           </button>
                         </div>
                       </div>
@@ -148,7 +167,7 @@ export default function MenuGridClient({ items, activeCategory, cart, setCart, c
                     </div>
                     <button 
                       type="button" 
-                      disabled={locked}
+                      disabled={locked || completedItems.has(m.id)}
                       data-menu-id={m.id} 
                       data-menu-name={m.name} 
                       onClick={() => {
@@ -156,9 +175,15 @@ export default function MenuGridClient({ items, activeCategory, cart, setCart, c
                         const quantity = parseInt(qtySelect?.value || '1')
                         addToCart(m, quantity)
                       }}
-                      className={`add-to-cart flex-1 py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-base ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`add-to-cart flex-1 py-3 px-4 font-semibold rounded-lg transition-all duration-300 text-base ${
+                        completedItems.has(m.id)
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-not-allowed transform scale-105'
+                          : locked 
+                          ? 'bg-gray-400 text-white opacity-50 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white active:scale-95'
+                      }`}
                     >
-                      🛒 담기
+                      {completedItems.has(m.id) ? '✅ 완료' : '🛒 담기'}
                     </button>
                   </div>
                 </div>

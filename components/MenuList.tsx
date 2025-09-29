@@ -2,6 +2,7 @@
 'use client'
 
 import { useState } from 'react'
+import Button from './ui/Button'
 
 type Category = { id: string; name: string; position: number }
 type MenuItem = {
@@ -150,18 +151,26 @@ export default function MenuList({
           </p>
         </div>
         <div className="flex gap-2 ml-4">
-          <button
+          <Button
             onClick={() => handleEdit(item)}
-            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            variant="primary"
+            size="sm"
+            completedText="수정 준비"
+            completedIcon="✏️"
+            type="button"
           >
             수정
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => handleDelete(item.id)}
-            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+            variant="danger"
+            size="sm"
+            completedText="삭제 완료"
+            completedIcon="🗑️"
+            type="button"
           >
             삭제
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -180,7 +189,7 @@ export default function MenuList({
                   {category.name}
                   <span className="ml-2 text-sm text-gray-500">({items.length}개)</span>
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {items.map(item => (
                     <MenuCard key={item.id} item={item} />
                   ))}
@@ -195,7 +204,7 @@ export default function MenuList({
                   분류되지 않은 메뉴
                   <span className="ml-2 text-sm text-gray-500">({uncategorizedItems.length}개)</span>
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {uncategorizedItems.map(item => (
                     <MenuCard key={item.id} item={item} />
                   ))}
@@ -210,7 +219,7 @@ export default function MenuList({
               {selectedCategory === 'uncategorized' ? '분류되지 않은 메뉴' : categories.find(c => c.id === selectedCategory)?.name || '선택된 카테고리'}
               <span className="ml-2 text-sm text-gray-500">({filteredItems.length}개)</span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredItems.map(item => (
                 <MenuCard key={item.id} item={item} />
               ))}
@@ -294,18 +303,25 @@ export default function MenuList({
             </div>
 
             <div className="flex gap-3 mt-6">
-              <button
+              <Button
                 onClick={handleUpdate}
-                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+                variant="primary"
+                className="flex-1"
+                completedText="수정 완료"
+                completedIcon="✓"
+                type="button"
               >
                 수정
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setEditingItem(null)}
-                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 transition-colors font-medium"
+                variant="secondary"
+                className="flex-1"
+                showCompleteFeedback={false}
+                type="button"
               >
                 취소
-              </button>
+              </Button>
             </div>
           </div>
         </div>
