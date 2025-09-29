@@ -1,3 +1,4 @@
+
 export const dynamic = 'force-dynamic'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import TimeRestrictionSettings from './TimeRestrictionSettings'
@@ -30,7 +31,7 @@ export default async function SecurityPage({ params }: { params?: Promise<{ id: 
       status,
       total_amount,
       table_id,
-      tables!inner(table_number)
+      tables(table_number)
     `)
     .eq('restaurant_id', rid)
     .order('created_at', { ascending: false })
@@ -286,7 +287,7 @@ export default async function SecurityPage({ params }: { params?: Promise<{ id: 
                     </div>
                     <div className='text-center'>
                       <h3 className={`font-medium text-${config.color}-900 mb-1`}>
-                        테이블 {log.tables?.table_number || 'N/A'}
+                        테이블 {Array.isArray(log.tables) ? log.tables[0]?.table_number : (log.tables as any)?.table_number || 'N/A'}
                       </h3>
                       <p className={`text-sm text-${config.color}-700 mb-2`}>
                         {new Date(log.created_at).toLocaleString('ko-KR', {
