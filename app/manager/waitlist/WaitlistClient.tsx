@@ -10,8 +10,10 @@ export default function WaitlistClient({ initialItems, tables }: { initialItems:
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [isClient, setIsClient] = useState(false)
   const [occupiedTableIds, setOccupiedTableIds] = useState<Set<string>>(new Set())
+  const [calledLeft, setCalledLeft] = useState<Record<string, number>>({}) // id -> seconds left
   const supabase = useRef(createSupabaseBrowser()).current
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const CALLED_WINDOW_MS = 5 * 60 * 1000
 
   useEffect(() => {
     setIsClient(true)
@@ -108,6 +110,25 @@ export default function WaitlistClient({ initialItems, tables }: { initialItems:
     }
   }
 
+  // 호출된 항목들의 남은 시간(5분) 카운트다운 계산
+  useEffect(() => {
+    const tick = () => {
+      const now = Date.now()
+      const next: Record<string, number> = {}
+      for (const it of items) {
+        if (it.status === 'called' && it.updated_at) {
+          const end = new Date(it.updated_at).getTime() + CALLED_WINDOW_MS
+          const left = Math.max(0, Math.ceil((end - now) / 1000))
+          next[it.id] = left
+        }
+      }
+      setCalledLeft(next)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [items])
+
   const callWaitlist = async (id: string) => {
     try {
       const res = await fetch(`/api/manager/waitlist/${id}/call`, {
@@ -117,7 +138,7 @@ export default function WaitlistClient({ initialItems, tables }: { initialItems:
       if (res.ok) {
         // 성공 시 해당 item의 status를 'called'로 업데이트
         setItems(prev => prev.map(item => 
-          item.id === id ? { ...item, status: 'called' } : item
+          item.id === id ? { ...item, status: 'called', updated_at: new Date().toISOString() } : item
         ))
       } else {
         const errorData = await res.json().catch(() => ({}))
@@ -150,6 +171,24 @@ export default function WaitlistClient({ initialItems, tables }: { initialItems:
     } catch (err) {
       console.error('seat error', err)
       alert('네트워크 오류로 배정 처리에 실패했습니다')
+    }
+  }
+
+  const cancelWaitlist = async (id: string) => {
+    try {
+      const res = await fetch(`/api/manager/waitlist/${id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      if (res.ok) {
+        setItems(prev => prev.filter(item => item.id !== id))
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        alert(errorData.error || '취소 처리에 실패했습니다')
+      }
+    } catch (err) {
+      console.error('cancel error', err)
+      alert('네트워크 오류로 취소 처리에 실패했습니다')
     }
   }
 
@@ -193,6 +232,8 @@ export default function WaitlistClient({ initialItems, tables }: { initialItems:
     const minutes = diffMinutes % 60
     return `${hours}시간 ${minutes}분`
   }
+
+  const formatMMSS = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`
 
   // 상태별로 그룹화
   const itemsByStatus = items.reduce((acc: Record<string, WaitItem[]>, item: any) => {
@@ -268,37 +309,53 @@ export default function WaitlistClient({ initialItems, tables }: { initialItems:
                           📢 호출
                         </button>
                       )}
-                      {item.status === 'called' && tables.length > 0 && (
-                        <div className='flex items-center space-x-2'>
-                          <select
-                            id={`table-select-${item.id}`}
-                            className='border border-gray-300 rounded px-2 py-1 text-sm'
-                            defaultValue=""
-                          >
-                            <option value="" disabled>테이블 선택</option>
-                            {tables
-                              .filter((table: any) => !occupiedTableIds.has(table.id))
-                              .map((table: any) => (
-                                <option key={table.id} value={table.id}>
-                                  {table.name} ({table.capacity}명)
-                                </option>
-                              ))}
-                          </select>
-                          <button
-                            onClick={() => {
-                              const select = document.getElementById(`table-select-${item.id}`) as HTMLSelectElement
-                              const tableId = select.value
-                              if (tableId) {
-                                seatWaitlist(item.id, tableId)
-                              } else {
-                                alert('테이블을 선택해주세요')
-                              }
-                            }}
-                            className='bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors'
-                          >
-                            배정
-                          </button>
-                        </div>
+                      {item.status === 'called' && (
+                        (() => {
+                          const left = calledLeft[item.id] ?? 0
+                          if (left === 0) {
+                            return (
+                              <button
+                                onClick={() => cancelWaitlist(item.id)}
+                                className='bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors'
+                              >
+                                취소
+                              </button>
+                            )
+                          }
+                          if (tables.length === 0) return null
+                          return (
+                            <div className='flex items-center space-x-2'>
+                              <select
+                                id={`table-select-${item.id}`}
+                                className='border border-gray-300 rounded px-2 py-1 text-sm'
+                                defaultValue=""
+                              >
+                                <option value="" disabled>테이블 선택</option>
+                                {tables
+                                  .filter((table: any) => !occupiedTableIds.has(table.id))
+                                  .map((table: any) => (
+                                    <option key={table.id} value={table.id}>
+                                      {table.name} ({table.capacity}명)
+                                    </option>
+                                  ))}
+                              </select>
+                              <button
+                                onClick={() => {
+                                  const select = document.getElementById(`table-select-${item.id}`) as HTMLSelectElement
+                                  const tableId = select.value
+                                  if (tableId) {
+                                    seatWaitlist(item.id, tableId)
+                                  } else {
+                                    alert('테이블을 선택해주세요')
+                                  }
+                                }}
+                                className='bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors'
+                              >
+                                배정
+                              </button>
+                            </div>
+                          )
+                        })()
                       )}
                     </div>
                     <div className='text-sm text-gray-600 flex justify-between'>
@@ -307,7 +364,16 @@ export default function WaitlistClient({ initialItems, tables }: { initialItems:
                       ) : (
                         <div>👥 {item.party_size}명</div>
                       )}
-                      <div>⏱️ {getWaitTime(item.created_at)}</div>
+                      {item.status === 'called' ? (
+                        <div className='text-right'>
+                          <div>⏱️ {getWaitTime(item.created_at)}</div>
+                          <div className={calledLeft[item.id] === 0 ? 'text-red-600 font-semibold' : 'text-blue-600'}>
+                            📢 남은 {formatMMSS(calledLeft[item.id] ?? 0)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>⏱️ {getWaitTime(item.created_at)}</div>
+                      )}
                     </div>
                   </div>
                 ))

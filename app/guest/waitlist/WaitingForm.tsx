@@ -23,12 +23,56 @@ export default function WaitingForm({ restaurantId, wt }: Props): JSX.Element {
   const [showToast, setShowToast] = useState(false)
   const [showBoard, setShowBoard] = useState(false)
   const [successName, setSuccessName] = useState('')
+  const [called, setCalled] = useState(false)
+  const [timeLeftSec, setTimeLeftSec] = useState<number | null>(null)
 
   useEffect(() => {
     if (!showToast) return
     const t = setTimeout(() => setShowToast(false), 3500)
     return () => clearTimeout(t)
   }, [showToast])
+
+  // 호출 상태 폴링 및 5분 타이머
+  useEffect(() => {
+    if (!restaurantId || !ticketId) return
+    let interval: any
+    let timer: any
+    let endAt: number | null = null
+
+    const poll = async () => {
+      try {
+        const params = new URLSearchParams({ restaurant_id: restaurantId, id: ticketId })
+        const res = await fetch(`/api/guest/waitlist?${params.toString()}`, { cache: 'no-store' })
+        if (!res.ok) return
+        const json = await res.json()
+        const status = json?.item?.status as string | undefined
+        if (status === 'called' && !called) {
+          setCalled(true)
+          // 5분 카운트다운 시작
+          endAt = Date.now() + 5 * 60 * 1000
+          setTimeLeftSec(Math.ceil((endAt - Date.now()) / 1000))
+          timer = setInterval(() => {
+            if (endAt == null) return
+            const left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000))
+            setTimeLeftSec(left)
+            if (left <= 0) {
+              clearInterval(timer)
+              // 만료되면 폴링도 중단
+              if (interval) clearInterval(interval)
+            }
+          }, 1000)
+        }
+      } catch {}
+    }
+
+    poll()
+    interval = setInterval(poll, 5000)
+    return () => {
+      if (interval) clearInterval(interval)
+      if (timer) clearInterval(timer)
+    }
+    // called는 폴링 내에서 변경되므로 의존성에 포함
+  }, [restaurantId, ticketId, called])
 
   // Block on reload/back-forward navigation or after a submission in this tab
   useEffect(() => {
@@ -137,19 +181,35 @@ export default function WaitingForm({ restaurantId, wt }: Props): JSX.Element {
   }
 
   if (showBoard && restaurantId) {
+    const expired = called && (timeLeftSec ?? 0) <= 0
+    const bannerClass = expired
+      ? 'bg-red-600 text-white rounded-2xl p-4'
+      : called
+      ? 'bg-yellow-400 text-black rounded-2xl p-4'
+      : 'bg-green-600 text-white rounded-2xl p-4'
     return (
       <div className="space-y-4">
-        <div className="bg-green-600 text-white rounded-2xl p-4">
-          <div className="font-semibold">대기 신청이 완료되었습니다.</div>
+        <div className={bannerClass}>
+          <div className="font-semibold">
+            {expired ? '호출 시간이 만료되었습니다' : called ? '5분내로 입장 하세요' : '대기 신청이 완료 되었습니다.'}
+          </div>
           {position ? (
-            <div className="text-sm text-green-100 mt-1">현재 대기번호: {position}</div>
+            <div className={expired ? 'text-sm text-white/90 mt-1' : called ? 'text-sm text-black/80 mt-1' : 'text-sm text-green-100 mt-1'}>현재 대기번호: {position}</div>
           ) : null}
           {successName ? (
-            <div className="text-sm text-green-100 mt-1">대기자: {successName}</div>
+            <div className={expired ? 'text-sm text-white/90 mt-1' : called ? 'text-sm text-black/80 mt-1' : 'text-sm text-green-100 mt-1'}>대기자: {successName}</div>
           ) : null}
           {ticketId ? (
-            <div className="text-[11px] text-white/80 mt-1">직원확인 코드: {ticketId}</div>
+            <div className={expired ? 'text-[11px] text-white/80 mt-1' : called ? 'text-[11px] text-black/70 mt-1' : 'text-[11px] text-white/80 mt-1'}>직원확인 코드: {ticketId}</div>
           ) : null}
+          {!expired && called && (
+            <div className="text-xs mt-1">
+              {timeLeftSec != null ? `남은 시간: ${Math.floor(timeLeftSec / 60)}:${String(timeLeftSec % 60).padStart(2, '0')}` : null}
+            </div>
+          )}
+          {expired && (
+            <div className="text-xs mt-2 text-white/90">원하시면 다시 대기 신청하셔야 합니다.</div>
+          )}
         </div>
         <WaitlistBoard restaurantId={restaurantId} />
       </div>

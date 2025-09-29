@@ -102,12 +102,34 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url)
     const restaurant_id = url.searchParams.get('restaurant_id') || url.searchParams.get('restaurant') || url.searchParams.get('rid')
+    const id = url.searchParams.get('id')
     if (!restaurant_id) {
       // During initial hydration or dev hot-reload, allow empty list instead of 400.
       return NextResponse.json({ items: [] }, { status: 200 })
     }
 
     const supabase = supabaseAdmin()
+
+    // 단일 대기자 상태 조회 (호출 여부 확인용)
+    if (id) {
+      const { data, error } = await supabase
+        .from('waitlist')
+        .select('id, status, updated_at, created_at')
+        .eq('id', id)
+        .eq('restaurant_id', restaurant_id)
+        .maybeSingle()
+
+      if (error) {
+        console.error('waitlist GET by id error', error)
+        return NextResponse.json({ error: 'fetch failed' }, { status: 500 })
+      }
+
+      if (!data) {
+        return NextResponse.json({ error: 'not found' }, { status: 404 })
+      }
+
+      return NextResponse.json({ item: { id: data.id, status: (data as any).status, updated_at: (data as any).updated_at, created_at: data.created_at } }, { status: 200 })
+    }
     // fetch waiting list minimal fields only; do NOT return phone
     const { data, error } = await supabase
       .from('waitlist')
