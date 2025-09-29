@@ -3,30 +3,32 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { requireRole } from '@/lib/auth'
 
 // POST로 들어오는 요청을 _method 필드에 따라 처리
-export async function POST(
-  req: NextRequest, 
-  { params }: { params: Promise<{ id: string; categoryId: string }> }
-) {
+export async function POST(req: NextRequest, context: any) {
   const formData = await req.formData()
-  const method = formData.get('_method') as string
-
-  if (method === 'PATCH') {
-    return PATCH(req, { params }, formData)
-  } else if (method === 'DELETE') {
-    return DELETE(req, { params })
-  }
-
+  const method = (formData.get('_method') as string) || 'POST'
+  if (method === 'PATCH') return updateCategory(req, context, formData)
+  if (method === 'DELETE') return deleteCategory(req, context)
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 })
 }
 
+// Also support real HTTP methods for clients that send PATCH/DELETE directly
+export async function PATCH(req: NextRequest, context: any) {
+  const formData = await req.formData().catch(() => null)
+  return updateCategory(req, context, formData || undefined)
+}
+
+export async function DELETE(req: NextRequest, context: any) {
+  return deleteCategory(req, context)
+}
+
 // 카테고리 수정
-async function PATCH(
-  req: NextRequest, 
-  { params }: { params: Promise<{ id: string; categoryId: string }> },
-  formData: FormData
+async function updateCategory(
+  req: NextRequest,
+  context: any,
+  formData?: FormData
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = (context && context.params) || {}
     const { id: restaurantId, categoryId } = resolvedParams
 
     if (!restaurantId || !categoryId) {
@@ -35,8 +37,9 @@ async function PATCH(
 
     await requireRole('manager', { targetRestaurantId: restaurantId })
 
-    const name = formData.get('name') as string
-    const position = parseInt(formData.get('position') as string) || 0
+  const body = formData || (await req.formData())
+  const name = (body.get('name') as string) || ''
+  const position = parseInt((body.get('position') as string) || '0') || 0
 
     if (!name) {
       return NextResponse.redirect(
@@ -78,7 +81,7 @@ async function PATCH(
     }
 
     return NextResponse.redirect(
-      new URL(`/admin/restaurants/${restaurantId}/menu?success=${name} 카테고리가 수정되었습니다`, req.url),
+      new URL(`/admin/restaurants/${restaurantId}/menu?success=${encodeURIComponent(name)}%20카테고리가%20수정되었습니다`, req.url),
       303
     )
 
@@ -89,12 +92,12 @@ async function PATCH(
 }
 
 // 카테고리 삭제
-async function DELETE(
-  req: NextRequest, 
-  { params }: { params: Promise<{ id: string; categoryId: string }> }
+async function deleteCategory(
+  req: NextRequest,
+  context: any
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = (context && context.params) || {}
     const { id: restaurantId, categoryId } = resolvedParams
 
     if (!restaurantId || !categoryId) {
@@ -150,7 +153,7 @@ async function DELETE(
     }
 
     return NextResponse.redirect(
-      new URL(`/admin/restaurants/${restaurantId}/menu?success=${existingCategory.name} 카테고리가 삭제되었습니다`, req.url),
+      new URL(`/admin/restaurants/${restaurantId}/menu?success=${encodeURIComponent(existingCategory.name)}%20카테고리가%20삭제되었습니다`, req.url),
       303
     )
 
