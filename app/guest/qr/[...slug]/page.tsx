@@ -104,16 +104,27 @@ export default async function OrderQrPage({ params }: any) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-screen-sm mx-auto px-4 py-4">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {restaurant.name} ({tableLabel})
-            </h1>
-            <p className="text-base text-gray-600">메뉴를 선택하고 주문해보세요</p>
-            
+      {/* 헤더 - 히어로 카드 스타일 */}
+      <div className="bg-gray-50 sticky top-0 z-10 pb-4 pt-4">
+        <div className="max-w-screen-sm mx-auto px-4">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 p-6 rounded-[2rem] shadow-xl shadow-indigo-900/20 border border-slate-700/50 relative overflow-hidden animate-fade-in">
+            {/* 배경 장식 */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full blur-3xl opacity-30 pointer-events-none"></div>
+            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
 
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="w-16 h-16 shrink-0 bg-white/10 backdrop-blur-md rounded-[1.2rem] flex items-center justify-center shadow-sm border border-white/20">
+                <span className="text-3xl">🏪</span>
+              </div>
+              <div className="text-left flex-1">
+                <h1 className="text-2xl font-black mb-1 text-white tracking-tight flex flex-wrap items-baseline gap-2">
+                  {restaurant.name} <span className="text-base font-semibold opacity-90 text-indigo-200">({tableLabel})</span>
+                </h1>
+                <p className="text-sm font-bold text-indigo-200/80 leading-relaxed tracking-wide">
+                  메뉴를 선택하고 주문해보세요
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
