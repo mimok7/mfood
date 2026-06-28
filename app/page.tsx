@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getSession } from '@/lib/auth'
 import Link from 'next/link'
 import type { Route } from 'next'
