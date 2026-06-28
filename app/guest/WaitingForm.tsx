@@ -65,41 +65,36 @@ export default function WaitingForm() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">대기 신청</h2>
-        <p className="text-sm text-gray-500">정확한 정보를 입력하시면 호출 시 더 정확히 안내해 드립니다.</p>
-      </div>
-
+    <div className="text-left">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
+          <label className="block text-[11px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">이름</label>
           <input
             name="name"
             type="text"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-starbucks-green focus:outline-none text-slate-800 font-semibold placeholder:text-slate-400 bg-slate-50/50 transition-all text-xs"
             placeholder="이름을 입력하세요"
           />
-          {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+          {errors.name && <p className="text-xs text-red-600 mt-1 ml-1">{errors.name}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">연락처</label>
+          <label className="block text-[11px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">연락처</label>
           <input
             name="phone"
             type="tel"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-starbucks-green focus:outline-none text-slate-800 font-semibold placeholder:text-slate-400 bg-slate-50/50 transition-all text-xs"
             placeholder="010-0000-0000"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">인원 수</label>
+          <label className="block text-[11px] font-bold text-slate-500 mb-1 ml-1 uppercase tracking-wider">인원 수</label>
           <select
             name="partySize"
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-starbucks-green focus:outline-none text-slate-800 font-semibold bg-slate-50/50 transition-all text-xs cursor-pointer"
           >
             <option value="">인원 수를 선택하세요</option>
             <option value="1">1명</option>
@@ -108,34 +103,49 @@ export default function WaitingForm() {
             <option value="4">4명</option>
             <option value="5+">5명 이상</option>
           </select>
-          {errors.partySize && <p className="text-sm text-red-600 mt-1">{errors.partySize}</p>}
+          {errors.partySize && <p className="text-xs text-red-600 mt-1 ml-1">{errors.partySize}</p>}
         </div>
 
         <button
           type="submit"
           disabled={submitting}
-          className={`w-full py-3 px-6 rounded-xl font-medium transition-colors ${
-            submitting ? 'bg-green-400 text-white' : 'bg-green-600 text-white hover:bg-green-700'
+          className={`w-full py-3.5 rounded-full text-base font-bold text-center transition-all shadow-md btn-starbucks active:scale-95 ${
+            submitting ? 'bg-starbucks-green/50 text-white cursor-not-allowed' : 'bg-starbucks-accent text-white hover:bg-starbucks-green'
           }`}
         >
           {submitting ? '처리중...' : '대기 신청하기'}
         </button>
       </form>
 
-      <div className="mt-6 text-center text-xs bg-yellow-100 text-black p-2 rounded">
-        입력하신 연락처는 대기 호출을 위해서만 사용됩니다.
+      <div className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-xl text-[10px] font-bold text-amber-900 leading-normal flex items-start gap-1.5 shadow-sm">
+        <span className="text-sm leading-none">⚠️</span>
+        <div>
+          <p>입력하신 연락처는 대기 호출 목적 외에 다른 용도로 절대 사용되지 않으며 호출 즉시 안전하게 파기됩니다.</p>
+        </div>
       </div>
 
       {/* modal */}
       {modal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setModal({ open: false, position: null, id: null })} />
-          <div className="relative bg-white rounded-lg p-6 w-[90%] max-w-md">
-            <h3 className="text-lg font-bold mb-2">대기 신청 완료</h3>
-            <p className="text-sm text-gray-700 mb-4">대기번호: <span className="font-mono text-xl">{modal.position ?? '—'}</span></p>
-            <div className="text-right">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => setModal({ open: false, position: null, id: null })}>닫기</button>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModal({ open: false, position: null, id: null })} />
+          <div className="relative bg-white rounded-3xl p-6 w-[90%] max-w-sm border border-slate-100 shadow-2xl text-center animate-fade-in">
+            <div className="w-12 h-12 bg-starbucks-light/60 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-xl">🎉</span>
             </div>
+            <h3 className="text-lg font-black text-starbucks-house mb-2">대기 신청 완료</h3>
+            <p className="text-sm text-starbucks-textBlackSoft mb-4">
+              대기 등록이 정상적으로 완료되었습니다.
+            </p>
+            <div className="bg-starbucks-canvas/50 p-4 rounded-2xl mb-6">
+              <p className="text-[10px] font-bold text-starbucks-textBlackSoft uppercase tracking-wider mb-1">대기 순서</p>
+              <p className="text-3xl font-mono font-black text-starbucks-green">{modal.position ?? '—'}번</p>
+            </div>
+            <button 
+              className="w-full py-3 bg-starbucks-accent hover:bg-starbucks-green text-white text-sm font-bold rounded-full btn-starbucks shadow-sm active:scale-95 transition-all" 
+              onClick={() => setModal({ open: false, position: null, id: null })}
+            >
+              확인
+            </button>
           </div>
         </div>
       )}

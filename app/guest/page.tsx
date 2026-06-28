@@ -76,18 +76,30 @@ export default async function GuestPage() {
   if (isWaitingQR) {
     // 대기 QR: 대기 신청 UI
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100">
-        <main className="max-w-screen-sm mx-auto px-6 py-10">
-          <div className="bg-green-600 rounded-2xl shadow-lg p-6 border border-gray-100 mb-6 text-white">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🪑</span>
-              <div className="text-left">
-                <h1 className="text-2xl md:text-3xl font-extrabold text-white">{restaurantName}</h1>
-                <p className="text-sm md:text-base text-green-100 mt-0.5">대기 신청 — 아래 양식에 정보를 입력해 주세요.</p>
-              </div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-starbucks-house via-[#162f28] to-starbucks-green p-4 relative overflow-hidden">
+        {/* 장식용 은은한 구체 광선 */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-starbucks-light/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-starbucks-gold/5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <main className="w-full max-w-md relative z-10">
+          <div className="bg-white/95 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-white/60 text-center animate-fade-in">
+            {/* 로고 영역 */}
+            <div className="w-24 h-24 mb-5 mx-auto rounded-3xl overflow-hidden shadow-lg border border-slate-100/30">
+              <img src="/icon-512.png" alt="mFood Logo" className="w-full h-full object-cover" />
             </div>
+
+            {/* 타이틀 및 소개글 */}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-starbucks-light text-starbucks-green border border-starbucks-green/20 mb-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-starbucks-green animate-pulse"></span>
+              대기 신청 접수처
+            </span>
+            <h1 className="text-2xl font-black text-starbucks-house tracking-tight mb-1">{restaurantName}</h1>
+            <p className="text-xs text-starbucks-textBlackSoft leading-normal mb-6">
+              아래 양식에 정보를 입력하여 대기 접수를 진행해 주세요.
+            </p>
+
+            <WaitingForm />
           </div>
-          <WaitingForm />
         </main>
       </div>
     )

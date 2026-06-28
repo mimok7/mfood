@@ -15,7 +15,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   // admin/manager 영역은 화면 너비 전체 사용
   if (isAreaLayout) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-starbucks-canvas">
         <div className="w-full">{children}</div>
       </div>
     )
@@ -23,7 +23,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   // 기본: 중앙 정렬 컨테이너 유지
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-starbucks-canvas">
       <div className="max-w-screen-xl mx-auto p-0">{children}</div>
     </div>
   )

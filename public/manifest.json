@@ -1,0 +1,22 @@
+{
+  "name": "mfood - 스테이 하롱 식당 관리",
+  "short_name": "mfood",
+  "description": "네이버 자유여행 카페 스테이 하롱 식당 관리 및 QR 주문 시스템",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2f0eb",
+  "theme_color": "#006241",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
