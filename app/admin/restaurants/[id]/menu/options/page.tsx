@@ -10,11 +10,13 @@ export default async function MenuOptionsPage({ params }: { params: Promise<{ id
   const supabase = createSupabaseServer()
 
   // 레스토랑 확인
-  const { data: restaurant } = await supabase
+  const { data: restaurantData } = await supabase
     .from('restaurants')
     .select('name')
     .eq('id', rid)
     .single()
+
+  const restaurant = restaurantData as { name: string } | null
 
   if (!restaurant) {
     redirect('/admin/restaurants')
