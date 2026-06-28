@@ -7,14 +7,14 @@ export const dynamic = 'force-dynamic'
 
 export default async function ServingPage() {
   const { restaurant_id } = await requireRole('manager')
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServer() as any
 
   // 서버 액션: 서빙 완료 처리
   async function markServed(formData: FormData) {
     'use server'
     const id = String(formData.get('id') || '')
     if (!id) return
-    const sb = createSupabaseServer()
+    const sb = createSupabaseServer() as any
     const { error } = await sb
       .from('kitchen_queue')
       .update({ status: 'served' })
@@ -100,7 +100,7 @@ export default async function ServingPage() {
           </div>
           <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
             {mealsReady.length > 0 ? (
-              mealsReady.map((item) => {
+              mealsReady.map((item: any) => {
                 const orderItem = item.order_items
                 const menuItem = orderItem?.menu_items
                 const table = orderItem?.orders?.tables
@@ -148,7 +148,7 @@ export default async function ServingPage() {
           </div>
           <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
             {drinksReady.length > 0 ? (
-              drinksReady.map((item) => {
+              drinksReady.map((item: any) => {
                 const orderItem = item.order_items
                 const menuItem = orderItem?.menu_items
                 const table = orderItem?.orders?.tables
@@ -196,7 +196,7 @@ export default async function ServingPage() {
           </div>
           <div className='p-4 space-y-3 max-h-96 overflow-y-auto'>
             {servedItems.length > 0 ? (
-              servedItems.map((item) => {
+              servedItems.map((item: any) => {
                 const orderItem = item.order_items
                 const menuItem = orderItem?.menu_items
                 const table = orderItem?.orders?.tables

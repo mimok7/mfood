@@ -16,15 +16,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const { id } = await params
 
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServer() as any
 
     // 대상 확인
-    const { data: waitItem, error: fetchError } = await supabase
+    const { data: waitItemData, error: fetchError } = await supabase
       .from('waitlist')
       .select('id, status, restaurant_id')
       .eq('id', id)
       .eq('restaurant_id', restaurant_id)
       .maybeSingle()
+
+    const waitItem = waitItemData as { id: string; status: string; restaurant_id: string } | null
 
     if (fetchError || !waitItem) {
       return NextResponse.json({ error: '대기자를 찾을 수 없습니다' }, { status: 404 })

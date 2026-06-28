@@ -14,7 +14,7 @@ export default async function ManagerOrderPage() {
     )
   }
 
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServer() as any
 
   // 현재 진행 중인 주문들 가져오기 (최근 24시간)
   const { data: orders, error } = await supabase
@@ -85,7 +85,7 @@ export default async function ManagerOrderPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {orders?.map((order) => {
+          {orders?.map((order: any) => {
             const status = getStatusDisplay(order.status)
             const totalItems = order.order_items?.reduce((sum: number, item: any) => sum + item.qty, 0) || 0
             const totalAmount = order.order_items?.reduce((sum: number, item: any) => sum + (item.price * item.qty), 0) || 0

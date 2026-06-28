@@ -1,7 +1,7 @@
 import { createSupabaseServer } from '@/lib/supabase-server'
 
 export async function getOrCreateOpenOrder(tableId: string, source: string) {
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServer() as any
   
   try {
     // First get the table to find restaurant_id

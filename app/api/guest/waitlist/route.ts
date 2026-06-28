@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const token = payload.token || null
   const waitlistToken = payload.wt || payload.waitlist_token || null
 
-  const supabase = supabaseAdmin()
+  const supabase = supabaseAdmin() as any
 
     // restaurant_id 검증 (token으로 추가 검증)
     if (!restaurant_id) {
@@ -108,7 +108,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ items: [] }, { status: 200 })
     }
 
-    const supabase = supabaseAdmin()
+    const supabase = supabaseAdmin() as any
 
     // 단일 대기자 상태 조회 (호출 여부 확인용)
     if (id) {
@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
       return s[0] + '*'.repeat(Math.max(1, s.length - 2)) + s[s.length - 1]
     }
 
-    const items = (data || []).map((row) => ({
+    const items = (data || []).map((row: any) => ({
       id: row.id,
       created_at: row.created_at,
       party_size: row.party_size,

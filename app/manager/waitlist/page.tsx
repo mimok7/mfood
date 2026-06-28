@@ -5,7 +5,7 @@ import WaitlistClient from './WaitlistClient'
 
 export default async function WaitlistPage() {
   const { restaurant_id } = await requireRole('manager')
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServer() as any
 
   // 웨이팅 리스트에서 현재 활성 상태인 항목들 가져오기
   const { data: waitlistItemsRaw } = await supabase

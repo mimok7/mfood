@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function KitchenPage() {
   const { restaurant_id } = await requireRole('manager')
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServer() as any
 
   // 키친 큐에서 현재 진행 중인 주문 아이템들 가져오기
   const { data: kitchenItemsRaw, error } = await supabase
@@ -91,7 +91,7 @@ export default async function KitchenPage() {
     'use server'
     const id = String(formData.get('id') || '')
     if (!id) return
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServer() as any
     const { error: upErr } = await supabase
       .from('kitchen_queue')
       .update({ status: 'prepping' })
@@ -107,7 +107,7 @@ export default async function KitchenPage() {
     'use server'
     const id = String(formData.get('id') || '')
     if (!id) return
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServer() as any
     const { error: upErr } = await supabase
       .from('kitchen_queue')
       .update({ status: 'ready' })
@@ -123,7 +123,7 @@ export default async function KitchenPage() {
     'use server'
     const id = String(formData.get('id') || '')
     if (!id) return
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServer() as any
     const { error: upErr } = await supabase
       .from('kitchen_queue')
       .update({ status: 'served' })

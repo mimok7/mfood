@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'name is required' }, { status: 400 })
   }
 
-  const { data, error } = await supabase.from('restaurants').insert(payload).select().maybeSingle()
+  const { data, error } = await supabase.from('restaurants').insert(payload as any).select().maybeSingle()
 
   if (error) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })

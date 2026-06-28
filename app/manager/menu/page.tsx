@@ -14,7 +14,7 @@ export default async function ManagerMenuPage() {
     )
   }
 
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServer() as any
 
   // 메뉴 카테고리와 아이템들을 함께 가져오기
   const { data: categories } = await supabase
@@ -30,7 +30,7 @@ export default async function ManagerMenuPage() {
     .order('name')
 
   // 카테고리별로 메뉴 아이템 그룹화
-  const itemsByCategory = (items ?? []).reduce((acc, item) => {
+  const itemsByCategory = (items ?? []).reduce((acc: any, item: any) => {
     const categoryId = item.category_id || 'uncategorized'
     if (!acc[categoryId]) {
       acc[categoryId] = []
@@ -75,7 +75,7 @@ export default async function ManagerMenuPage() {
       {/* 메뉴 목록 */}
       <div className='space-y-6'>
         {categories && categories.length > 0 ? (
-          categories.map((category) => {
+          categories.map((category: any) => {
             const categoryItems = itemsByCategory[category.id] || []
             return (
               <div key={category.id} className='bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden'>
@@ -90,7 +90,7 @@ export default async function ManagerMenuPage() {
                 {categoryItems.length > 0 ? (
                   <div className='p-6'>
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                      {categoryItems.map((item) => (
+                      {categoryItems.map((item: any) => (
                         <div
                           key={item.id}
                           className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
@@ -197,7 +197,7 @@ export default async function ManagerMenuPage() {
 
             <div className='p-6'>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                {itemsByCategory['uncategorized'].map((item) => (
+                {itemsByCategory['uncategorized'].map((item: any) => (
                   <div
                     key={item.id}
                     className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${

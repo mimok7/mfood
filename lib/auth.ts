@@ -8,7 +8,7 @@ import type { Route } from 'next'
  * This is the primary server-side utility for fetching authentication and authorization context.
  */
 export async function getSession() {
-  const supabase = createSupabaseServer()
+  const supabase = createSupabaseServer() as any
   const { data: { user }, error } = await supabase.auth.getUser()
 
   // If there's an error fetching the user or no user is found, return a guest session.

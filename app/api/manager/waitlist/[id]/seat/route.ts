@@ -21,15 +21,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: '테이블을 선택해주세요' }, { status: 400 })
     }
 
-    const supabase = createSupabaseServer()
+    const supabase = createSupabaseServer() as any
 
     // 해당 대기자가 이 레스토랑의 것인지 확인
-    const { data: waitItem, error: fetchError } = await supabase
+    const { data: waitItemData, error: fetchError } = await supabase
       .from('waitlist')
       .select('id, status, restaurant_id')
       .eq('id', id)
       .eq('restaurant_id', restaurant_id)
       .maybeSingle()
+
+    const waitItem = waitItemData as { id: string; status: string; restaurant_id: string } | null
 
     if (fetchError || !waitItem) {
       return NextResponse.json({ error: '대기자를 찾을 수 없습니다' }, { status: 404 })
@@ -40,12 +42,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     // 테이블이 이 레스토랑의 것인지 확인
-    const { data: tableItem, error: tableError } = await supabase
+    const { data: tableItemData, error: tableError } = await supabase
       .from('tables')
       .select('id, restaurant_id')
       .eq('id', table_id)
       .eq('restaurant_id', restaurant_id)
       .maybeSingle()
+
+    const tableItem = tableItemData as { id: string; restaurant_id: string } | null
 
     if (tableError || !tableItem) {
       return NextResponse.json({ error: '테이블을 찾을 수 없습니다' }, { status: 404 })

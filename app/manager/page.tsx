@@ -7,8 +7,9 @@ export const dynamic = "force-dynamic"
 
 export default async function ManagerPage() {
   const { restaurant_id } = await requireRole("manager")
-  const supabase = createSupabaseServer()
-  const { data: restaurant } = await supabase.from("restaurants").select("name").eq("id", restaurant_id).single()
+  const supabase = createSupabaseServer() as any
+  const { data: restaurantData } = await supabase.from("restaurants").select("name").eq("id", restaurant_id).single()
+  const restaurant = restaurantData as { name: string } | null
 
   // 실시간 통계 데이터 가져오기 (정확한 스키마 기반)
   // - 주문/키친 상태는 kitchen_queue의 상태(queued, prepping, ready)를 사용
